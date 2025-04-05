@@ -3,7 +3,7 @@
 from src.search.section_coarse_search import coarse_search_sections
 from src.search.fine_search import fine_search_chunks
 from src.inference.kure_embedding_model import kure_embedding_model
-from src.inference.llm_model import local_llm  # 예시
+from src.inference.llm_model import local_llm
 
 class PDFChatBot:
     def __init__(self, sections, chunk_index):

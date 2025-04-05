@@ -28,4 +28,4 @@ class KUREEmbeddingModel:
         return embs
 
 # 전역 인스턴스 예시
-kure_embedding_model = KUREEmbeddingModel(device="cpu")
+kure_embedding_model = KUREEmbeddingModel(device="mps")

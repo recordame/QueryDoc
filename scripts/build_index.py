@@ -1,6 +1,8 @@
 # scripts/build_index.py
 
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
 import numpy as np
 from src.inference.kure_embedding_model import kure_embedding_model

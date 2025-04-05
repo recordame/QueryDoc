@@ -19,7 +19,7 @@ def extract_pdf_content(pdf_path: str) -> Dict[str, Any]:
     }
     """
     doc = fitz.open(pdf_path)
-    toc = doc.getToC(simple=True)  # [(level, title, page_number), ...]
+    toc = doc.get_toc(simple=True)  # [(level, title, page_number), ...]
 
     pages_text = []
     for page_idx in range(len(doc)):

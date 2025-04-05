@@ -23,4 +23,4 @@ class LocalLLM:
             )
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-local_llm = LocalLLM(device="cpu")
+local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-Deep-2.4B", device="mps")
