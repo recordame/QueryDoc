@@ -69,14 +69,14 @@ python app.py
 
 •	POST /ask 엔드포인트에 JSON 형식으로 질문을 전송하면 답변을 받을 수 있습니다.
 
-예시 API 요청
+6. 예시 API 요청
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "설치 방법이 뭔가요?"}'
 ```
 
-주요 라이브러리
+## 주요 라이브러리
 
 •	PyMuPDF (fitz): PDF 텍스트와 ToC 추출
 
@@ -86,7 +86,7 @@ curl -X POST http://localhost:8000/ask \
 
 •	FastAPI: 간단한 REST API 서버
 
-주의사항
+## 주의사항
 
 •	KURE-v1, EXAONE-3.5-2.4B-Instruct 등은 처음 로드 시 모델 파일을 다운로드하므로 다소 시간이 걸릴 수 있습니다.
 
