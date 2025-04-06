@@ -28,4 +28,11 @@ class EmbeddingModel:
         return embs
 
 # 전역 인스턴스 예시
-embedding_model = EmbeddingModel(device="mps")
+
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+else:
+    device = "cpu"
+embedding_model = EmbeddingModel(device=device)

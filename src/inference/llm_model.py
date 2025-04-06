@@ -23,4 +23,11 @@ class LocalLLM:
             )
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-Deep-2.4B", device="mps")
+
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+else:
+    device = "cpu"
+local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-Deep-2.4B", device=device)
