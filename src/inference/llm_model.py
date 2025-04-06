@@ -30,4 +30,4 @@ elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
-local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-Deep-2.4B", device=device)
+local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct", device=device)
