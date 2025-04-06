@@ -108,6 +108,8 @@ if __name__ == "__main__":
     os.makedirs(output_folder, exist_ok=True)
 
     pdf_files = [f for f in os.listdir(pdf_folder) if f.endswith(".pdf")]
+    processed_sections = []  # 각 PDF의 섹션 정보를 저장할 리스트
+
     for fname in pdf_files:
         pdf_path = os.path.join(pdf_folder, fname)
         extracted_data = extract_pdf_content(pdf_path)
@@ -116,5 +118,16 @@ if __name__ == "__main__":
         output_json = os.path.join(output_folder, f"{base_name}.json")
         save_extracted_content(extracted_data, output_json)
         print(f"Processed {fname}: Found {len(extracted_data['sections'])} sections.")
+        
+        processed_sections.append(extracted_data["sections"])
 
+    # 만약 PDF가 하나라면 sections.json 파일로 저장
+    if len(processed_sections) == 1:
+        sections_output = os.path.join(output_folder, "sections.json")
+        with open(sections_output, 'w', encoding='utf-8') as f:
+            json.dump(processed_sections[0], f, ensure_ascii=False, indent=2)
+        print(f"Sections saved to {sections_output}")
+    else:
+        print("Multiple PDF files processed. Please check individual section files.")
+    
     print("PDF Extraction Complete.")
