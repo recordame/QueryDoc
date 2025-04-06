@@ -60,7 +60,17 @@ python scripts/section_rep_builder.py
 ```
 •	This creates files like sections_with_emb.json.
 
-5.	Run the Chatbot Server
+
+5. Directly Testing chatbot.py
+
+To test the chatbot interactively, run:
+```bash
+python src/chatbot.py
+```
+
+Then type your question (e.g., “Explain chapter 1.”) and press Enter. Type “exit” to quit.
+
+6.	Run the Chatbot Server
 ```bash
 python app.py
 ```
@@ -69,7 +79,7 @@ python app.py
 
 • You can send a JSON-formatted question to the POST /ask endpoint to receive an answer.
 
-6. Example API Request
+7. Example API Request
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \

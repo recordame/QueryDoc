@@ -1,38 +1,32 @@
 # src/search/fine_search.py
 
-import hnswlib
 import numpy as np
-from typing import List, Dict
 
-def hnsw_fine_search(query_emb: List[float], chunk_index: List[Dict], target_sections: List[Dict], top_k: int = 5) -> List[Dict]:
+def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=5):
     """
-    Filters chunk_index by target_sections and performs hnswlib search on the filtered set.
-    
-    Parameters:
-      - query_emb: query embedding as list of floats.
-      - chunk_index: list of chunk dicts; each should have "embedding" and "metadata" with key "section_title".
-      - target_sections: list of section dicts; each has a "title" key.
-      - top_k: number of top chunks to return.
-      
-    Returns:
-      A list of top_k chunk dicts.
+    chunk_index: [{ "embedding": [...], "metadata": {"section_title": "...", ...}}, ...]
+    target_sections: [{ "title": "2장 설치방법", ...}, ...]
+
+    - target_sections에 포함된 섹션 title만 필터링
+    - 코사인 유사도 내림차순으로 상위 top_k 청크 반환
     """
-    target_titles = {sec["title"] for sec in target_sections}
-    candidates = [item for item in chunk_index if item["metadata"].get("section_title") in target_titles]
+    section_titles = [sec["title"] for sec in target_sections]
 
-    if not candidates:
-        return []
+    candidates = [
+        item for item in chunk_index
+        if item["metadata"]["section_title"] in section_titles
+    ]
 
-    vectors = np.array([item["embedding"] for item in candidates], dtype=np.float32)
-    num_candidates, dim = vectors.shape
+    results = []
+    qv = np.array(query_emb)
+    q_norm = np.linalg.norm(qv)
+    for c in candidates:
+        emb = np.array(c["embedding"])
+        dot = np.dot(qv, emb)
+        denom = np.linalg.norm(emb) * q_norm + 1e-8
+        cos_val = dot / denom
+        results.append((cos_val, c))
 
-    p = hnswlib.Index(space='cosine', dim=dim)
-    p.init_index(max_elements=num_candidates, ef_construction=200, M=16)
-    p.add_items(vectors)
-    p.set_ef(50)
-
-    query_np = np.array(query_emb, dtype=np.float32).reshape(1, dim)
-    labels, distances = p.knn_query(query_np, k=top_k)
-    
-    top_chunks = [candidates[idx] for idx in labels[0]]
-    return top_chunks
+    results.sort(key=lambda x: x[0], reverse=True)
+    top_results = [r[1] for r in results[:top_k]]
+    return top_results
