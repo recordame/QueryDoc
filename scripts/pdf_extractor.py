@@ -2,15 +2,12 @@
 
 import os
 import json
+import sys
 import fitz  # PyMuPDF
 from typing import Dict, Any, List
 import pdfplumber
 
 def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str, Any]]:
-    """
-    Built-in TOC를 이용해 섹션 정보를 생성합니다.
-    toc: [(level, title, start_page), ...]
-    """
     sections = []
     for i, entry in enumerate(toc):
         level, title, start_page = entry
@@ -28,10 +25,6 @@ def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str,
     return sections
 
 def build_sections_from_layout(pdf_path: str, font_size_threshold: float = 14.0) -> List[Dict[str, Any]]:
-    """
-    pdfplumber를 이용해 페이지별 단어 정보를 추출한 후, 
-    폰트 크기가 font_size_threshold 이상이고 키워드("Chapter", "Section", "Part", "장", "절")가 포함된 단어들을 제목 후보로 사용하여 섹션 정보를 생성합니다.
-    """
 
     candidate_headings = []
     with pdfplumber.open(pdf_path) as pdf:
@@ -43,7 +36,7 @@ def build_sections_from_layout(pdf_path: str, font_size_threshold: float = 14.0)
                 text = word.get("text", "")
                 if size >= font_size_threshold and any(kw.lower() in text.lower() for kw in ["chapter", "section", "part", "장", "절"]):
                     candidate_headings.append({
-                        "page": page.page_number,  # pdfplumber는 1-based page_number 제공
+                        "page": page.page_number,
                         "text": text,
                         "font_size": size
                     })
@@ -66,22 +59,11 @@ def build_sections_from_layout(pdf_path: str, font_size_threshold: float = 14.0)
     return sections
 
 def extract_pdf_content(pdf_path: str) -> Dict[str, Any]:
-    """
-    PDF에서 다음을 추출합니다:
-      - 내장 TOC (PyMuPDF)
-      - 각 페이지 텍스트
-      - 섹션 정보: 내장 TOC가 있으면 TOC 기반, 없으면 레이아웃 분석 기반,
-        최종적으로 모두 없으면 페이지 기반 섹션(각 페이지를 섹션으로)으로 대체.
-    """
     doc = fitz.open(pdf_path)
     total_pages = len(doc)
-    pages_text = []
-    for page_idx in range(total_pages):
-        page = doc[page_idx]
-        text = page.get_text("text")
-        pages_text.append(text)
+    pages_text = [doc[i].get_text("text") for i in range(total_pages)]
     
-    toc = doc.get_toc(simple=True)  # 수정된 부분: get_toc 사용
+    toc = doc.get_toc(simple=True)  # get_toc 사용
     
     if toc:
         sections = build_sections_from_toc(toc, total_pages)
@@ -103,31 +85,47 @@ def save_extracted_content(content: Dict[str, Any], output_path: str):
         json.dump(content, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
-    pdf_folder = "data"
-    output_folder = "data/extracted"
+    # 원본 PDF 파일을 저장할 별도 디렉토리 설정 (예: data/original)
+    pdf_folder = os.path.join("data", "original")
+    output_folder = os.path.join("data", "extracted")
     os.makedirs(output_folder, exist_ok=True)
 
     pdf_files = [f for f in os.listdir(pdf_folder) if f.endswith(".pdf")]
-    processed_sections = []  # 각 PDF의 섹션 정보를 저장할 리스트
-
-    for fname in pdf_files:
-        pdf_path = os.path.join(pdf_folder, fname)
-        extracted_data = extract_pdf_content(pdf_path)
-
-        base_name = os.path.splitext(fname)[0]
-        output_json = os.path.join(output_folder, f"{base_name}.json")
-        save_extracted_content(extracted_data, output_json)
-        print(f"Processed {fname}: Found {len(extracted_data['sections'])} sections.")
-        
-        processed_sections.append(extracted_data["sections"])
-
-    # 만약 PDF가 하나라면 sections.json 파일로 저장
-    if len(processed_sections) == 1:
-        sections_output = os.path.join(output_folder, "sections.json")
-        with open(sections_output, 'w', encoding='utf-8') as f:
-            json.dump(processed_sections[0], f, ensure_ascii=False, indent=2)
-        print(f"Sections saved to {sections_output}")
+    if not pdf_files:
+        print(f"[ERROR] No PDF files found in '{pdf_folder}'.")
+        sys.exit(1)
+    
+    # 여러 파일이 있으면 사용자에게 목록을 보여주고 하나만 선택하도록 함
+    if len(pdf_files) > 1:
+        print("Multiple PDF files found:")
+        for idx, fname in enumerate(pdf_files):
+            print(f"{idx+1}. {fname}")
+        selection = input("Select a file by number: ")
+        try:
+            selection_idx = int(selection) - 1
+            if selection_idx < 0 or selection_idx >= len(pdf_files):
+                print("Invalid selection.")
+                sys.exit(1)
+            selected_file = pdf_files[selection_idx]
+        except ValueError:
+            print("Invalid input.")
+            sys.exit(1)
     else:
-        print("Multiple PDF files processed. Please check individual section files.")
+        selected_file = pdf_files[0]
+
+    pdf_path = os.path.join(pdf_folder, selected_file)
+    print(f"Processing file: {selected_file}")
+    extracted_data = extract_pdf_content(pdf_path)
+
+    base_name = os.path.splitext(selected_file)[0]
+    output_json = os.path.join(output_folder, f"{base_name}.json")
+    save_extracted_content(extracted_data, output_json)
+    print(f"Processed {selected_file}: Found {len(extracted_data['sections'])} sections.")
+
+    # For a single PDF, also save merged sections as sections.json.
+    sections_output = os.path.join(output_folder, "sections.json")
+    with open(sections_output, 'w', encoding='utf-8') as f:
+        json.dump(extracted_data["sections"], f, ensure_ascii=False, indent=2)
+    print(f"Sections saved to {sections_output}")
     
     print("PDF Extraction Complete.")

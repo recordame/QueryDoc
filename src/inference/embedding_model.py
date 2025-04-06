@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 import torch
 
 class EmbeddingModel:
-    def __init__(self, model_name="intfloat/multilingual-e5-large", device="cpu"):
+    def __init__(self, model_name="BAAI/bge-m3", device="cpu"):
         """
         모델 로드 및 장치 할당
         """
@@ -35,4 +35,4 @@ elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
-embedding_model = EmbeddingModel(device=device)
+embedding_model = EmbeddingModel(model_name="BAAI/bge-m3", device=device)

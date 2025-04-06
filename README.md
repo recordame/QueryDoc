@@ -23,9 +23,10 @@ my_kure_chatbot/
 │       ├─ init.py
 │       └─ text_cleaning.py
 ├─ data/
-│   ├─ sample.pdf
 │   ├─ chunks/
-│   └─ index/
+│   ├─ index/
+│   └─ original/
+│       └─ sample.pdf
 ├─ app.py
 ├─ requirements.txt
 └─ README.md
@@ -92,16 +93,16 @@ curl -X POST http://localhost:8000/ask \
 
 • PyMuPDF (fitz): Extracts PDF text and table of contents (ToC).
 
-• SentenceTransformers: Loads the intfloat/multilingual-e5-large embedding model.
+• SentenceTransformers: Loads the bge-m3 embedding model.
 
-• Transformers: Provides the local LLM (e.g., EXAONE-3.5-2.4B-Instruct).
+• Transformers: Provides the local LLM (e.g., EXAONE-Deep-2.4B).
 
 • FastAPI: A simple REST API server.
 
 
 ## Notes
 
-• Models such as intfloat/multilingual-e5-large and EXAONE-3.5-2.4B-Instruct may take some time to download the first time they are loaded.
+• Models such as bge-m3 and EXAONE-Deep-2.4B may take some time to download the first time they are loaded.
 
 • Since section content is complemented using the average of section chunk embeddings (without a summarization model), very long sections may result in reduced search accuracy. (Utilizing a summarization model may be considered in the future.)
 
