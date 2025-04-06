@@ -1,6 +1,6 @@
 # QueryDoc
 
-이 프로젝트는 임베딩 모델을 사용해 PDF 문서를 분석하고, Coarse-to-Fine 검색(RAG) 방식으로 LLM 답변을 생성하는 챗봇 예시입니다.
+This project is an example chatbot that analyzes PDF documents using an embedding model and generates LLM answers through a Coarse-to-Fine search (RAG) approach.
 
 ## QueryDoc
 ```bash
@@ -31,64 +31,65 @@ my_kure_chatbot/
 └─ README.md
 ```
 
-## 설치 및 실행
+## Installation and Execution
 
-1. **가상 환경 생성 및 라이브러리 설치**  
+1. Create a virtual environment and install libraries
 ```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-(Windows 환경이라면 .\venv\Scripts\activate 등으로 활성화)
+(On Windows, activate with .\venv\Scripts\activate or a similar command.)
 
-2.	PDF 추출 & 청크 분할
+2.	Extract PDF & Split into Chunks
 ```bash
 python scripts/pdf_extractor.py
 python scripts/chunker.py
 ```
-•	실행 후, data/extracted/*.json과 data/chunks/*.json이 생성됩니다.
+•	After execution, JSON files will be created in data/extracted/*.json and data/chunks/*.json.
 
-3.	임베딩 빌드
+3.	Build Embeddings
 ```bash
 python scripts/build_index.py
 ```
-•	data/index/*_vectors.json이 생성됩니다.
+•	This generates data/index/*_vectors.json.
 
-4.	섹션 대표벡터 생성
+4.	Generate Section Representative Vectors
 ```bash
 python scripts/section_rep_builder.py
 ```
-•	sections_with_emb.json 등이 생성됩니다.
+•	This creates files like sections_with_emb.json.
 
-5.	챗봇 서버 실행
+5.	Run the Chatbot Server
 ```bash
 python app.py
 ```
     
-•	FastAPI 서버가 http://0.0.0.0:8000(기본 포트)에서 동작합니다.
+• A FastAPI server will run at http://0.0.0.0:8000 (default port).
 
-•	POST /ask 엔드포인트에 JSON 형식으로 질문을 전송하면 답변을 받을 수 있습니다.
+• You can send a JSON-formatted question to the POST /ask endpoint to receive an answer.
 
-6. 예시 API 요청
+6. Example API Request
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "설치 방법이 뭔가요?"}'
+  -d '{"question": "Explain chapter 1."}'
 ```
 
-## 주요 라이브러리
+## Key Libraries
 
-•	PyMuPDF (fitz): PDF 텍스트와 ToC 추출
+• PyMuPDF (fitz): Extracts PDF text and table of contents (ToC).
 
-•	SentenceTransformers: intfloat/multilingual-e5-large 임베딩 모델 로딩
+• SentenceTransformers: Loads the intfloat/multilingual-e5-large embedding model.
 
-•	Transformers: 로컬 LLM (예: EXAONE-3.5-2.4B-Instruct)
+• Transformers: Provides the local LLM (e.g., EXAONE-3.5-2.4B-Instruct).
 
-•	FastAPI: 간단한 REST API 서버
+• FastAPI: A simple REST API server.
 
-## 주의사항
 
-•	intfloat/multilingual-e5-large, EXAONE-3.5-2.4B-Instruct 등은 처음 로드 시 모델 파일을 다운로드하므로 다소 시간이 걸릴 수 있습니다.
+## Notes
 
-•	Summarization 모델 없이 섹션 청크 임베딩 평균 방식으로 섹션 내용을 보완하기 때문에, 섹션이 매우 긴 경우 검색 정확도가 떨어질 수 있습니다. (추후 Summarization 모델 활용 가능)
+• Models such as intfloat/multilingual-e5-large and EXAONE-3.5-2.4B-Instruct may take some time to download the first time they are loaded.
+
+• Since section content is complemented using the average of section chunk embeddings (without a summarization model), very long sections may result in reduced search accuracy. (Utilizing a summarization model may be considered in the future.)
 

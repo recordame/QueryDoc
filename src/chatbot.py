@@ -48,10 +48,10 @@ class PDFChatBot:
         relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)
 
         # Fine Search (청크 레벨)
-        query_emb = kure_embedding_model.get_embedding(query)
+        query_emb = embedding_model.get_embedding(query)
         best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks)
 
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)
-        answer_text = local_llm.generate(prompt, max_length=200)
+        answer_text = local_llm.generate(prompt, max_length=1024)
         return answer_text
