@@ -1,40 +1,44 @@
 # src/search/section_coarse_search.py
 
+import hnswlib
 import numpy as np
-from ..inference.embedding_model import embedding_model
+from typing import List, Dict
+from src.inference.embedding_model import embedding_model
 
-def cosine_similarity(v1, v2):
-    v1 = np.array(v1)
-    v2 = np.array(v2)
-    dot = np.dot(v1, v2)
-    denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
-    return dot / denom
-
-def coarse_search_sections(query: str, sections: list, beta=0.3, top_k=3):
+def build_section_reps(sections: List[Dict], beta: float = 0.3) -> np.ndarray:
     """
-    sections: [
-      { "title": "...", "title_emb": [...], "avg_chunk_emb": [...], ... },
-      ...
-    ]
-    query 임베딩과 섹션(title_emb, avg_chunk_emb) 간 코사인 유사도를 각각 구해
-    final_score = beta * sim_title + (1 - beta) * sim_chunk
-    상위 top_k 섹션 반환
+    For each section in sections, compute a combined representative vector as:
+      rep = beta * title_emb + (1 - beta) * avg_chunk_emb
+    Returns a numpy array of shape (num_sections, dim).
     """
-    query_emb = embedding_model.get_embedding(query)
-
-    scored = []
+    reps = []
     for sec in sections:
-        title_emb = sec.get("title_emb")
-        chunk_emb = sec.get("avg_chunk_emb")
-        if title_emb is None or chunk_emb is None:
-            # 데이터가 없는 경우는 패스
-            continue
-        sim_title = cosine_similarity(query_emb, title_emb)
-        sim_chunk = cosine_similarity(query_emb, chunk_emb)
+        title_emb = np.array(sec.get("title_emb"), dtype=np.float32)
+        avg_emb = np.array(sec.get("avg_chunk_emb"), dtype=np.float32)
+        rep = beta * title_emb + (1 - beta) * avg_emb
+        reps.append(rep)
+    return np.array(reps, dtype=np.float32)
 
-        final_score = beta * sim_title + (1 - beta) * sim_chunk
-        scored.append((final_score, sec))
+def hnsw_section_search(query: str, sections: List[Dict], beta: float = 0.3, top_k: int = 3) -> List[Dict]:
+    """
+    Performs coarse search among sections using hnswlib.
+    sections: list of section dicts; each should have "title_emb" and "avg_chunk_emb" fields.
+    query: query string.
+    beta: weight for title embedding.
+    top_k: number of sections to return.
+    """
+    query_emb = np.array(embedding_model.get_embedding(query), dtype=np.float32)
     
-    scored.sort(key=lambda x: x[0], reverse=True)
-    top_sections = [x[1] for x in scored[:top_k]]
+    section_reps = build_section_reps(sections, beta)
+    num_sections, dim = section_reps.shape
+
+    p = hnswlib.Index(space='cosine', dim=dim)
+    p.init_index(max_elements=num_sections, ef_construction=200, M=16)
+    p.add_items(section_reps)
+    p.set_ef(50)
+
+    query_np = query_emb.reshape(1, dim)
+    labels, distances = p.knn_query(query_np, k=top_k)
+    
+    top_sections = [sections[idx] for idx in labels[0]]
     return top_sections

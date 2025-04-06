@@ -19,6 +19,9 @@ uvicorn
 # numpy for vector operations
 numpy
 
+# C++ based faster vector search
+hnswlib
+
 # (Optional) 추가 라이브러리
 requests
 python-dotenv
