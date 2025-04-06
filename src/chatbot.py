@@ -32,7 +32,7 @@ class PDFChatBot:
         context_text = "\n\n".join(context_parts)
         prompt = f"""
 Please answer the question below using the following document context.
-Do not add your own knowledge. 
+
 === Document Context ===
 {context_text}
 
