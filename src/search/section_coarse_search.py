@@ -1,7 +1,7 @@
 # src/search/section_coarse_search.py
 
 import numpy as np
-from src.inference.kure_embedding_model import kure_embedding_model
+from inference.embedding_model import embedding_model
 
 def cosine_similarity(v1, v2):
     v1 = np.array(v1)
@@ -20,7 +20,7 @@ def coarse_search_sections(query: str, sections: list, beta=0.3, top_k=3):
     final_score = beta * sim_title + (1 - beta) * sim_chunk
     상위 top_k 섹션 반환
     """
-    query_emb = kure_embedding_model.get_embedding(query)
+    query_emb = embedding_model.get_embedding(query)
 
     scored = []
     for sec in sections:

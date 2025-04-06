@@ -1,12 +1,12 @@
-# src/inference/kure_embedding_model.py
+# src/inference/embedding_model.py
 
 from sentence_transformers import SentenceTransformer
 import torch
 
-class KUREEmbeddingModel:
-    def __init__(self, model_name="nlpai-lab/KURE-v1", device="cpu"):
+class EmbeddingModel:
+    def __init__(self, model_name="intfloat/multilingual-e5-large", device="cpu"):
         """
-        KURE-v1 모델 로드 및 장치 할당
+        모델 로드 및 장치 할당
         """
         self.model = SentenceTransformer(model_name)
         self.device = device
@@ -28,4 +28,4 @@ class KUREEmbeddingModel:
         return embs
 
 # 전역 인스턴스 예시
-kure_embedding_model = KUREEmbeddingModel(device="mps")
+embedding_model = EmbeddingModel(device="mps")

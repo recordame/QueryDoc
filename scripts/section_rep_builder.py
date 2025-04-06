@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
 import numpy as np
-from src.inference.kure_embedding_model import kure_embedding_model
+from inference.embedding_model import embedding_model
 
 def build_section_reps(sections, chunk_index):
     """
@@ -20,7 +20,7 @@ def build_section_reps(sections, chunk_index):
     """
     # 1) 섹션 제목 임베딩 (batch)
     titles = [sec["title"] for sec in sections]
-    title_embs = kure_embedding_model.get_embeddings(titles)  # shape: (num_sections, dim)
+    title_embs = embedding_model.get_embeddings(titles)  # shape: (num_sections, dim)
     for i, sec in enumerate(sections):
         sec["title_emb"] = title_embs[i].tolist()
 

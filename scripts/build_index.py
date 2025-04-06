@@ -5,16 +5,16 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
 import numpy as np
-from src.inference.kure_embedding_model import kure_embedding_model
+from src.inference.embedding_model import embedding_model
 
 def build_chunk_index(chunks):
     """
     chunks: [{"content": "...", "section_title": "...", ...}, ...]
-    KURE 모델로 각 content를 임베딩해
+    임베딩 모델로 각 content를 임베딩해
     [{ "embedding": [...], "metadata": {...} }, ...] 형태로 반환
     """
     contents = [c["content"] for c in chunks]
-    embeddings = kure_embedding_model.get_embeddings(contents)  # shape: (N, emb_dim)
+    embeddings = embedding_model.get_embeddings(contents)  # shape: (N, emb_dim)
 
     index_data = []
     for i, emb in enumerate(embeddings):

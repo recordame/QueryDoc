@@ -1,6 +1,6 @@
 # QueryDoc
 
-이 프로젝트는 **KURE-v1** 임베딩 모델을 사용해 PDF 문서를 분석하고, Coarse-to-Fine 검색(RAG) 방식으로 LLM 답변을 생성하는 챗봇 예시입니다.
+이 프로젝트는 임베딩 모델을 사용해 PDF 문서를 분석하고, Coarse-to-Fine 검색(RAG) 방식으로 LLM 답변을 생성하는 챗봇 예시입니다.
 
 ## QueryDoc
 ```bash
@@ -80,7 +80,7 @@ curl -X POST http://localhost:8000/ask \
 
 •	PyMuPDF (fitz): PDF 텍스트와 ToC 추출
 
-•	SentenceTransformers: KURE-v1 임베딩 모델 로딩
+•	SentenceTransformers: intfloat/multilingual-e5-large 임베딩 모델 로딩
 
 •	Transformers: 로컬 LLM (예: EXAONE-3.5-2.4B-Instruct)
 
@@ -88,7 +88,7 @@ curl -X POST http://localhost:8000/ask \
 
 ## 주의사항
 
-•	KURE-v1, EXAONE-3.5-2.4B-Instruct 등은 처음 로드 시 모델 파일을 다운로드하므로 다소 시간이 걸릴 수 있습니다.
+•	intfloat/multilingual-e5-large, EXAONE-3.5-2.4B-Instruct 등은 처음 로드 시 모델 파일을 다운로드하므로 다소 시간이 걸릴 수 있습니다.
 
 •	Summarization 모델 없이 섹션 청크 임베딩 평균 방식으로 섹션 내용을 보완하기 때문에, 섹션이 매우 긴 경우 검색 정확도가 떨어질 수 있습니다. (추후 Summarization 모델 활용 가능)
 

@@ -69,7 +69,8 @@ if __name__ == "__main__":
     os.makedirs(chunk_folder, exist_ok=True)
 
     for fname in os.listdir(extracted_folder):
-        if fname.endswith(".json"):
+        # sections.json 파일은 건너뛰기
+        if fname.endswith(".json") and fname != "sections.json":
             path = os.path.join(extracted_folder, fname)
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
