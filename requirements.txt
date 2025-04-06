@@ -1,5 +1,6 @@
 # PyMuPDF (fitz) for PDF parsing
 PyMuPDF
+pdfplumber
 
 # SentenceTransformers (incl. dependencies like HuggingFace Transformers)
 sentence-transformers==4.0.2
