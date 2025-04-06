@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
 import numpy as np
-from inference.embedding_model import embedding_model
+from src.inference.embedding_model import embedding_model
 
 def build_section_reps(sections, chunk_index):
     """
