@@ -8,7 +8,7 @@ class EmbeddingModel:
         """
         모델 로드 및 장치 할당
         """
-        self.model = SentenceTransformer(model_name)
+        self.model = SentenceTransformer(model_name, trust_remote_code=True)
         self.device = device
         if device in ["cuda", "mps"]:
             self.model.to(self.device)

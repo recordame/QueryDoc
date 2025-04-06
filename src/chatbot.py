@@ -38,6 +38,11 @@ Please answer the question below using the following document context.
 
 === User Question ===
 {user_query}
+
+Please reason step by step, and put your final answer.
+
+=== Answer ===
+
 """
         return prompt.strip()
 

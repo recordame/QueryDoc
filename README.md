@@ -85,7 +85,7 @@ python app.py
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "Explain chapter 1."}'
+  -d '{"question": "What's egocentric AI agent?"}'
 ```
 
 ## Key Libraries
