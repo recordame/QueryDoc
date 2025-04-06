@@ -68,7 +68,9 @@ To test the chatbot interactively, run:
 python src/chatbot.py
 ```
 
-Then type your question (e.g., “Explain chapter 1.”) and press Enter. Type “exit” to quit.
+•	Then type your question (e.g., “Explain Chapter 1.”) and press Enter. 
+
+•	Type “exit” to quit.
 
 6.	Run the Chatbot Server
 ```bash
