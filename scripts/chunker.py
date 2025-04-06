@@ -16,7 +16,7 @@ def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
     page_num+1 >= start_page => 해당 섹션
     단순한 방식으로 현재 섹션 제목을 식별
     """
-    current_section = "기타"
+    current_section = "Others"
     for (lvl, title, start_p) in toc:
         if page_num + 1 >= start_p:
             current_section = title

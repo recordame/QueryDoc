@@ -10,7 +10,7 @@ def cosine_similarity(v1, v2):
     denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
     return dot / denom
 
-def coarse_search_sections(query: str, sections: list, beta=0.3, top_k=3):
+def coarse_search_sections(query: str, sections: list, beta=0.2, top_k=3):
     """
     sections: [
       { "title": "...", "title_emb": [...], "avg_chunk_emb": [...], ... },
