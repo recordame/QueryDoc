@@ -10,7 +10,7 @@ def cosine_similarity(v1, v2):
     denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
     return dot / denom
 
-def simple_vector_search(query_emb, index_data: List[Dict], top_k=5):
+def simple_vector_search(query_emb, index_data: List[Dict], top_k=8):
     """
     query_emb: numpy array or list[float]
     index_data: [{"embedding": [...], "metadata": {...}}, ...]

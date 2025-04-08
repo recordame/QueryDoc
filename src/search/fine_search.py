@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=5):
+def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10):
     """
     chunk_index: [{ "embedding": [...], "metadata": {"section_title": "...", ...}}, ...]
     target_sections: [{ "title": "2장 설치방법", ...}, ...]
