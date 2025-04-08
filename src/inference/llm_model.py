@@ -11,7 +11,7 @@ class LocalLLM:
         self.model.to(device)
         self.model.eval()
 
-    def generate(self, prompt, max_length=128):
+    def generate(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model.generate(

@@ -59,7 +59,7 @@ Please answer the question below using the following document context.
         
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)
-        answer_text = local_llm.generate(prompt, max_length=4096)
+        answer_text = local_llm.generate(prompt)
         return answer_text
 
 if __name__ == "__main__":
