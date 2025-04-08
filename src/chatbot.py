@@ -31,7 +31,9 @@ class PDFChatBot:
             context_parts.append(f"[{section_title}] {content}")
         context_text = "\n\n".join(context_parts)
         prompt = f"""
-Please answer the question below using the following document context.
+
+Answer the user's question based on the information provided in the document context below. 
+Your response should reference the context clearly, but you may paraphrase or summarize appropriately. 
 
 === Document Context ===
 {context_text}
@@ -44,7 +46,7 @@ Please answer the question below using the following document context.
 """
         return prompt.strip()
 
-    def answer(self, query: str, beta: float = 0.3, top_sections: int = 5, top_chunks: int = 10, streaming=False):
+    def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False):
         """
         1) Coarse Search: 섹션 레벨에서 상위 top_sections개 섹션을 찾습니다.
         2) Fine Search: 해당 섹션 내 청크들 중 상위 top_chunks개를 검색합니다.
