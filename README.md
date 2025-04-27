@@ -12,7 +12,7 @@ QueryDoc/
 │   └─ section_rep_builder.py
 ├─ src/
 │   ├─ inference/
-│   │   ├─ kure_embedding_model.py
+│   │   ├─ embedding_model.py
 │   │   └─ llm_model.py
 │   ├─ search/
 │   │   ├─ section_coarse_search.py
