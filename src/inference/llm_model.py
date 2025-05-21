@@ -35,7 +35,7 @@ class LocalLLM:
             thread = Thread(target=self.model.generate, kwargs=dict(
                 input_ids=input_ids.to(self.device),
                 eos_token_id=self.tokenizer.eos_token_id,
-                max_new_tokens=32768,
+                max_new_tokens=4096,
                 do_sample=True,
                 temperature=0.6,
                 top_p=0.95,
@@ -51,7 +51,7 @@ class LocalLLM:
             output = self.model.generate(
                 input_ids.to(self.device),
                 eos_token_id=self.tokenizer.eos_token_id,
-                max_new_tokens=32768,
+                max_new_tokens=4096,
                 do_sample=True,
                 temperature=0.6,
                 top_p=0.95,
@@ -71,3 +71,4 @@ else:
 local_llm = LocalLLM(model_name="trillionlabs/Trillion-7B-preview",
                         attn_implementation=attn_implementation, 
                         device=device)
+
