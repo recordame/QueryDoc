@@ -182,7 +182,7 @@ with gr.Blocks() as demo:
                 gr.Markdown("- Check **Coarse-to-Fine Search** to enable Table of Contents based search.")
                 question_input = gr.Textbox(label="Question")
                 ask_btn = gr.Button("Ask", variant="primary")
-                use_index = gr.Checkbox(label="Use Table of Contents", value=False)
+                use_index = gr.Checkbox(label="Coarse-to-Fine Search", value=False)
         gr.Markdown("### Answer")
         answer_output = gr.Textbox(label="Answer")
 
