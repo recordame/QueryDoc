@@ -91,7 +91,7 @@ class PDFChatBot:
         if fine_only:              
             # Fine Search (청크 레벨)
             query_emb = embedding_model.get_embedding(query)
-            best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks, fine_only=True)
+            best_chunks = fine_search_chunks(query_emb, self.chunk_index, self.sections, top_k=top_chunks, fine_only=True)
         
         else:
             # Coarse Search (섹션 레벨)
