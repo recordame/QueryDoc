@@ -73,6 +73,8 @@ python src/chatbot.py
 
 •	Type “exit” to quit.
 
+The system prompt used by the chatbot can be customized by editing `DEFAULT_SYSTEM_PROMPT` in `src/chatbot.py` or by passing a custom prompt when creating a `PDFChatBot` instance.
+
 6.	Run the Chatbot Server
 ```bash
 python app.py
@@ -82,7 +84,14 @@ python app.py
 
 • You can send a JSON-formatted question to the POST /ask endpoint to receive an answer.
 
-7. Example API Request
+7. Launch the Web Demo
+```bash
+python web_demo.py
+```
+
+• A browser window will appear allowing you to upload a PDF and edit the system prompt before asking questions.
+
+8. Example API Request
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
@@ -98,6 +107,8 @@ curl -X POST http://localhost:8000/ask \
 • Transformers: Provides the local LLM (e.g., EXAONE-Deep-2.4B).
 
 • FastAPI: A simple REST API server.
+
+• Gradio: Interactive web UI for demos.
 
 
 ## Notes
