@@ -89,24 +89,33 @@ class PDFChatBot:
             The LLM’s answer text.
         """
         if fine_only:              
-            # Fine Search (청크 레벨)
-            query_emb = embedding_model.get_embedding(query)
-            best_chunks = fine_search_chunks(query_emb, self.chunk_index, self.sections, top_k=top_chunks, fine_only=True)
-            query_improvement_prompt = "The user question is: " + query + "\n\n"
-            query_improvement_prompt += "The answer is: " + best_chunks[0]["metadata"]["content"] + "\n\n"
-            query_improvement_prompt += "Please generate a better question based on the answer above.\n\n"
-            query_improvement_prompt += "The improved question is: "
-            improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
-            query_emb = embedding_model.get_embedding(query + ':' + improved_query)
-            best_chunks = fine_search_chunks(query_emb, self.chunk_index, self.sections, top_k=top_chunks, fine_only=True)
+            relevant_secs = self.sections
         else:
             # Coarse Search (섹션 레벨)
             relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)
             
-            # Fine Search (청크 레벨)
-            query_emb = embedding_model.get_embedding(query)
-            best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks)
+        # Fine Search (청크 레벨)
+        query_emb = embedding_model.get_embedding(query)
+        best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks, fine_only=fine_only)
         
+        # Improve Query 
+        query_improvement_prompt = "The user question is: " + query + "\n\n"
+        query_improvement_prompt += "The answer is: " + best_chunks[0]["metadata"]["content"] + "\n\n"
+        query_improvement_prompt += "Please generate a better question based on the answer above.\n\n"
+        query_improvement_prompt += "The improved question is: "
+        
+        improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
+
+        if fine_only:              
+            relevant_secs = self.sections
+        else:
+            # Coarse Search (섹션 레벨)
+            relevant_secs = coarse_search_sections(query + ':' + improved_query, self.sections, beta=beta, top_k=top_sections)
+            
+        # Fine Search (청크 레벨)            
+        query_emb = embedding_model.get_embedding(query + ':' + improved_query)                            
+        best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks, fine_only=fine_only)
+            
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)
         answer_text = local_llm.generate(prompt, streaming=streaming)
