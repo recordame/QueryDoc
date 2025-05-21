@@ -110,22 +110,19 @@ python web_demo.py
 
 • PyMuPDF (fitz): Extracts PDF text and table of contents (ToC).
 
-• SentenceTransformers: Loads the e5-large-v2 embedding model.
+• SentenceTransformers: Loads the BAAI/bge-m3 embedding model.
 
-• Transformers: Provides the local LLM (e.g., EXAONE-Deep-2.4B).
+• Transformers: Provides the local LLM (e.g., trillionlabs/Trillion-7B-preview).
 
 • FastAPI: A simple REST API server.
 
 • Gradio: Interactive web demo framework.
 
 
-• Gradio: Provides the interactive web demo.
-
-
 
 ## Notes
 
-• Models such as e5-large-v2 and EXAONE-Deep-2.4B may take some time to download the first time they are loaded.
+• Models such as bge-m3 and Trillion-7B may take some time to download the first time they are loaded.
 
 • Since section content is complemented using the average of section chunk embeddings (without a summarization model), very long sections may result in reduced search accuracy. (Utilizing a summarization model may be considered in the future.)
 
