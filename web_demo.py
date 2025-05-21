@@ -2,6 +2,7 @@
 
 import os
 import json
+
 import shutil
 from typing import Tuple
 
@@ -51,6 +52,7 @@ def ask_question(question, sections, chunk_index, system_prompt, username):
     return bot.answer(question)
 
 
+
 USERS = {"admin": "password"}
 
 
@@ -70,23 +72,18 @@ with gr.Blocks() as demo:
         login_btn = gr.Button("Login")
     login_status = gr.Textbox(label="Login Status", interactive=False)
 
+
     with gr.Row():
         pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
         prompt_input = gr.Textbox(label="System Prompt", value=DEFAULT_PROMPT)
         load_btn = gr.Button("Load PDF")
-
-    status = gr.Textbox(label="Status", interactive=False)
-    question_input = gr.Textbox(label="Question")
-    answer_output = gr.Textbox(label="Answer")
-
-    sections_state = gr.State()
-    index_state = gr.State()
     user_state = gr.State()
 
     login_btn.click(login, inputs=[username_in, password_in], outputs=[user_state, login_status])
 
     load_btn.click(load_pdf, inputs=[pdf_input, prompt_input, user_state], outputs=[sections_state, index_state, status])
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, user_state], outputs=answer_output)
+
 
 if __name__ == "__main__":
     demo.launch()
