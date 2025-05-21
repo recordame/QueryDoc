@@ -11,14 +11,12 @@ class LocalLLM:
             model_name,
             trust_remote_code=True,
             padding_side='left',
-            token="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"
         )
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             attn_implementation=attn_implementation,
             trust_remote_code=True,
-            token="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"
         ).to(self.device)
 
         self.model.eval()
