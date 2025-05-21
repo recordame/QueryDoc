@@ -19,3 +19,4 @@ uvicorn
 
 # numpy for vector operations
 numpy
+gradio
