@@ -7,7 +7,7 @@ import json
 from typing import List, Dict, Any
 from src.utils.text_cleaning import basic_clean_text
 
-CHUNK_SIZE = 1000  # 글자 기준 (예: 500자씩)
+CHUNK_SIZE = 500  # 글자 기준 (예: 500자씩)
 
 def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
     """
