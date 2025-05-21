@@ -98,6 +98,14 @@ curl -X POST http://localhost:8000/ask \
   -d '{"question": "What's egocentric AI agent?"}'
 ```
 
+8. Run the Web Demo
+```bash
+python web_demo.py
+```
+• Use the login form (default credentials: admin / password) and upload a PDF. You can modify the "System Prompt" field to test different instructions. Uploaded files are stored in `data/user_uploads/<username>`.
+
+The default prompt used by the chatbot is defined as `DEFAULT_SYSTEM_PROMPT` in `src/chatbot.py`. You may edit this constant or pass your own prompt when creating `PDFChatBot`.
+
 ## Key Libraries
 
 • PyMuPDF (fitz): Extracts PDF text and table of contents (ToC).
@@ -108,7 +116,9 @@ curl -X POST http://localhost:8000/ask \
 
 • FastAPI: A simple REST API server.
 
-• Gradio: Interactive web UI for demos.
+
+• Gradio: Provides the interactive web demo.
+
 
 
 ## Notes
