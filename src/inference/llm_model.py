@@ -5,12 +5,24 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStream
 from threading import Thread
 
 class LocalLLM:
-    def __init__(self, model_name="LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct", device="cpu"):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+    def __init__(self, model_name="trillionlabs/Trillion-7B-preview", attn_implementation="flash_attention_2", device="gpu"):
         self.device = device
-        self.model.to(device)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            trust_remote_code=True,
+            padding_side='left',
+            token="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"
+        )
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.bfloat16,
+            attn_implementation=attn_implementation,
+            trust_remote_code=True,
+            token="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"
+        ).to(self.device)
+
         self.model.eval()
+
 
     def generate(self, prompt, streaming=False):
         messages = [{"role": "user", "content": prompt}]
@@ -48,10 +60,16 @@ class LocalLLM:
             )
             return self.tokenizer.decode(output[0])
 
+
 if torch.cuda.is_available():
     device = "cuda"
+    attn_implementation = "flash_attention_2"
 elif torch.backends.mps.is_available():
     device = "mps"
+    attn_implementation = "sdpa"
 else:
     device = "cpu"
-local_llm = LocalLLM(model_name="LGAI-EXAONE/EXAONE-Deep-2.4B", device=device)
+    attn_implementation = "sdpa"
+local_llm = LocalLLM(model_name="trillionlabs/Trillion-7B-preview",
+                        attn_implementation=attn_implementation, 
+                        device=device)
