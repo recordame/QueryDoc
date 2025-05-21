@@ -179,7 +179,7 @@ with gr.Blocks() as demo:
             with gr.Column():
                 gr.Markdown("### Ask a Question")
                 gr.Markdown("- Ask a question based on the uploaded PDF.")
-                gr.Markdown("- Check 'Use Table of Contents' to enable 2-stage Search.")
+                gr.Markdown("- Check 'Coarse-to-Fine Search' to enable Table of Contents based search.")
                 question_input = gr.Textbox(label="Question")
                 ask_btn = gr.Button("Ask", variant="primary")
                 use_index = gr.Checkbox(label="Use Table of Contents", value=False)
