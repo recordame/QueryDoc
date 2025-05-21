@@ -60,7 +60,7 @@ class PDFChatBot:
         prompt = f"{self.system_prompt}\n\n=== Document Context ===\n{context_text}\n\n=== User Question ===\n{user_query}\n\n=== Answer ===\n"
         return prompt.strip()
 
-    def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False):
+    def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False, fine_only=False):
         """
         End‑to‑end answer generation pipeline.
 
@@ -88,12 +88,18 @@ class PDFChatBot:
         str
             The LLM’s answer text.
         """
-        # Coarse Search (섹션 레벨)
-        relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)
+        if fine_only:              
+            # Fine Search (청크 레벨)
+            query_emb = embedding_model.get_embedding(query)
+            best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks, fine_only=True)
         
-        # Fine Search (청크 레벨)
-        query_emb = embedding_model.get_embedding(query)
-        best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks)
+        else:
+            # Coarse Search (섹션 레벨)
+            relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)
+            
+            # Fine Search (청크 레벨)
+            query_emb = embedding_model.get_embedding(query)
+            best_chunks = fine_search_chunks(query_emb, self.chunk_index, relevant_secs, top_k=top_chunks)
         
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)

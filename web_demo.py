@@ -141,7 +141,7 @@ def ask_question(question, sections, chunk_index, system_prompt, username):
         return "Please upload and process a PDF first."
     prompt = system_prompt or DEFAULT_PROMPT
     bot = PDFChatBot(sections, chunk_index, system_prompt=prompt)
-    answer = bot.answer(question)
+    answer = bot.answer(question, fine_only=True)
     answer = answer.replace('<|endoftext|><|im_start|>user',"=== System Prompt ===")
     answer = answer.replace('<|im_end|>\n<|im_start|>assistant','')
     answer = answer.replace('<|im_end|>','')
@@ -199,4 +199,4 @@ with gr.Blocks() as demo:
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state], outputs=answer_output)
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_port=30987, server_name="0.0.0.0")
