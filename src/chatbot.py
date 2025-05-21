@@ -92,7 +92,13 @@ class PDFChatBot:
             # Fine Search (청크 레벨)
             query_emb = embedding_model.get_embedding(query)
             best_chunks = fine_search_chunks(query_emb, self.chunk_index, self.sections, top_k=top_chunks, fine_only=True)
-        
+            query_improvement_prompt = "The user question is: " + query + "\n\n"
+            query_improvement_prompt += "The answer is: " + best_chunks[0]["metadata"]["content"] + "\n\n"
+            query_improvement_prompt += "Please generate a better question based on the answer above.\n\n"
+            query_improvement_prompt += "The improved question is: "
+            improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
+            query_emb = embedding_model.get_embedding(query + ':' + improved_query)
+            best_chunks = fine_search_chunks(query_emb, self.chunk_index, self.sections, top_k=top_chunks, fine_only=True)
         else:
             # Coarse Search (섹션 레벨)
             relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)
