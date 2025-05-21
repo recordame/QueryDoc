@@ -4,15 +4,26 @@ import re
 
 def basic_clean_text(text: str) -> str:
     """
-    - 탭, 줄바꿈을 공백으로 대체
-    - 여러 연속 공백 -> 1개 공백
-    - 앞뒤 공백 제거
-    예시로 간단히 작성
+    Basic text normalizer.
+
+    1. Replace tab and newline characters with a single space.  
+    2. Collapse multiple consecutive whitespace characters into one space.  
+    3. Strip leading and trailing whitespace.
+
+    Parameters
+    ----------
+    text : str
+        Raw input text.
+
+    Returns
+    -------
+    str
+        Cleaned text string.
     """
-    # 탭, 줄바꿈을 공백으로
+    # Replace tabs and newlines with a space
     text = text.replace('\t', ' ').replace('\n', ' ')
 
-    # 여러 공백 -> 단일 공백
+    # Collapse multiple spaces into a single space
     text = re.sub(r'\s+', ' ', text)
 
     return text.strip()

@@ -6,7 +6,7 @@ import torch
 class EmbeddingModel:
     def __init__(self, model_name="intfloat/e5-large-v2", device="cpu"):
         """
-        모델 로드 및 장치 할당
+        Load the model and move it to the specified device.
         """
         self.model = SentenceTransformer(model_name, trust_remote_code=True)
         self.device = device
@@ -15,19 +15,19 @@ class EmbeddingModel:
 
     def get_embedding(self, text: str):
         """
-        단일 문장(text)에 대한 임베딩(1D list[float]) 반환
+        Return the embedding (1‑D list[float]) for a single sentence.
         """
         emb = self.model.encode([text], convert_to_numpy=True, device=self.device)[0]
         return emb.tolist()
 
     def get_embeddings(self, texts: list):
         """
-        여러 문장(texts)에 대한 임베딩(2D numpy array) 반환
+        Return embeddings (2‑D numpy array) for multiple sentences.
         """
         embs = self.model.encode(texts, convert_to_numpy=True, device=self.device)
         return embs
 
-# 전역 인스턴스 예시
+# Example of a global instance
 
 if torch.cuda.is_available():
     device = "cuda"

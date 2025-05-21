@@ -7,7 +7,7 @@ import json
 from src.search.section_coarse_search import coarse_search_sections
 from src.search.fine_search import fine_search_chunks
 from src.inference.embedding_model import embedding_model
-from src.inference.llm_model import local_llm  # 로컬 LLM 구현 예시
+from src.inference.llm_model import local_llm  # Example implementation of a local LLM
 
 DEFAULT_SYSTEM_PROMPT = (
     "Answer the user's question based on the information provided in the document context below.\n"
@@ -18,9 +18,16 @@ DEFAULT_SYSTEM_PROMPT = (
 class PDFChatBot:
     def __init__(self, sections, chunk_index, system_prompt: str = DEFAULT_SYSTEM_PROMPT):
         """
-        sections: 각 섹션은 {"title", "title_emb", "avg_chunk_emb", ...}를 포함하는 리스트
-        chunk_index: 각 청크는 {"embedding": [...], "metadata": {...}} 형태의 리스트
-        system_prompt: LLM 호출 전에 사용할 시스템 프롬프트
+        Parameters
+        ----------
+        sections : list[dict]
+            Each element contains keys such as ``"title"``, ``"title_emb"``,
+            ``"avg_chunk_emb"``, etc.
+        chunk_index : list[dict]
+            Each chunk is a dictionary like
+            ``{"embedding": [...], "metadata": {...}}``.
+        system_prompt : str
+            System prompt that is prepended before calling the LLM.
         """
         self.sections = sections
         self.chunk_index = chunk_index
@@ -28,8 +35,20 @@ class PDFChatBot:
 
     def build_prompt(self, user_query, retrieved_chunks):
         """
-        LLM에 전달할 프롬프트를 구성합니다.
-        retrieved_chunks: [{"embedding": [...], "metadata": {...}}, ...]
+        Construct the prompt that will be sent to the LLM.
+
+        Parameters
+        ----------
+        user_query : str
+            The question entered by the user.
+        retrieved_chunks : list[dict]
+            A list of chunks in the form
+            ``[{"embedding": [...], "metadata": {...}}, ...]``.
+
+        Returns
+        -------
+        str
+            A fully formatted prompt string.
         """
         context_parts = []
         for item in retrieved_chunks:
@@ -43,9 +62,31 @@ class PDFChatBot:
 
     def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False):
         """
-        1) Coarse Search: 섹션 레벨에서 상위 top_sections개 섹션을 찾습니다.
-        2) Fine Search: 해당 섹션 내 청크들 중 상위 top_chunks개를 검색합니다.
-        3) LLM에 프롬프트를 전달하여 최종 답변을 생성합니다.
+        End‑to‑end answer generation pipeline.
+
+        Steps
+        -----
+        1. **Coarse Search** – Find the top *top_sections* sections at the section level.  
+        2. **Fine Search** – Within those sections, retrieve the top *top_chunks* chunks.  
+        3. **LLM Generation** – Send a prompt to the LLM and return the generated answer.
+
+        Parameters
+        ----------
+        query : str
+            User question.
+        beta : float, default = 0.3
+            Interpolation weight for coarse search scoring.
+        top_sections : int, default = 10
+            Number of sections to retain in the coarse search.
+        top_chunks : int, default = 5
+            Number of chunks to use in the fine search.
+        streaming : bool, default = False
+            If ``True``, stream tokens as they are generated.
+
+        Returns
+        -------
+        str
+            The LLM’s answer text.
         """
         # Coarse Search (섹션 레벨)
         relevant_secs = coarse_search_sections(query, self.sections, beta=beta, top_k=top_sections)

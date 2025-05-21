@@ -4,11 +4,33 @@ import numpy as np
 
 def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10):
     """
-    chunk_index: [{ "embedding": [...], "metadata": {"section_title": "...", ...}}, ...]
-    target_sections: [{ "title": "2장 설치방법", ...}, ...]
+    Find the most relevant text chunks within the specified sections.
 
-    - target_sections에 포함된 섹션 title만 필터링
-    - 코사인 유사도 내림차순으로 상위 top_k 청크 반환
+    Parameters
+    ----------
+    query_emb : list[float] | np.ndarray
+        Embedding vector of the user query.
+    chunk_index : list[dict]
+        Each element is a dictionary like:
+        {
+            "embedding": [...],
+            "metadata": {"section_title": "...", ...}
+        }
+    target_sections : list[dict]
+        Sections to search within, e.g.,
+        [
+            {"title": "Section 2 Installation Guide", ...},
+            ...
+        ]
+    top_k : int, default = 10
+        Number of top‑scoring chunks to return.
+
+    Notes
+    -----
+    - Only chunks whose ``section_title`` appears in *target_sections* are considered.
+    - Cosine similarity is computed between the query embedding and each candidate
+      chunk. The chunks are then sorted in descending order of similarity and the
+      top *k* results are returned.
     """
     section_titles = [sec["title"] for sec in target_sections]
 

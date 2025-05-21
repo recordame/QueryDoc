@@ -3,16 +3,16 @@ PyMuPDF
 pdfplumber
 
 # SentenceTransformers (incl. dependencies like HuggingFace Transformers)
-sentence-transformers==4.0.2
+sentence-transformers
 
 # HuggingFace Transformers
 transformers
 
-# PyTorch 최신 버전 (2.6.0)
-torch==2.6.0
+# PyTorch 
+torch
 
 # FastAPI for serving the chatbot
-fastapi==0.115.12
+fastapi
 
 # Uvicorn for ASGI server
 uvicorn
