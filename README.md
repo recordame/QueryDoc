@@ -89,6 +89,14 @@ curl -X POST http://localhost:8000/ask \
   -d '{"question": "What's egocentric AI agent?"}'
 ```
 
+8. Run the Web Demo
+```bash
+python web_demo.py
+```
+* Sign in with the default credentials `admin`/`password`.
+* Uploaded PDFs are saved under `data/user_uploads/<username>`.
+* You can modify the system prompt in `src/chatbot.py` or provide one in the web interface.
+
 ## Key Libraries
 
 • PyMuPDF (fitz): Extracts PDF text and table of contents (ToC).
@@ -98,6 +106,8 @@ curl -X POST http://localhost:8000/ask \
 • Transformers: Provides the local LLM (e.g., EXAONE-Deep-2.4B).
 
 • FastAPI: A simple REST API server.
+
+• Gradio: Interactive web demo framework.
 
 
 ## Notes
