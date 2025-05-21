@@ -181,7 +181,7 @@ with gr.Blocks() as demo:
                 gr.Markdown("- Ask a question based on the uploaded PDF.")
                 question_input = gr.Textbox(label="Question")
                 ask_btn = gr.Button("Ask", variant="primary")
-                use_index = gr.Checkbox(label="Use Index", value=True)
+                use_index = gr.Checkbox(label="Use Index", value=False)
         gr.Markdown("### Answer")
         answer_output = gr.Textbox(label="Answer")
 
