@@ -9,14 +9,22 @@ from src.search.fine_search import fine_search_chunks
 from src.inference.embedding_model import embedding_model
 from src.inference.llm_model import local_llm  # 로컬 LLM 구현 예시
 
+DEFAULT_SYSTEM_PROMPT = (
+    "Answer the user's question based on the information provided in the document context below.\n"
+    "Your response should reference the context clearly, but you may paraphrase or summarize appropriately."
+)
+
+
 class PDFChatBot:
-    def __init__(self, sections, chunk_index):
+    def __init__(self, sections, chunk_index, system_prompt: str = DEFAULT_SYSTEM_PROMPT):
         """
         sections: 각 섹션은 {"title", "title_emb", "avg_chunk_emb", ...}를 포함하는 리스트
         chunk_index: 각 청크는 {"embedding": [...], "metadata": {...}} 형태의 리스트
+        system_prompt: LLM 호출 전에 사용할 시스템 프롬프트
         """
         self.sections = sections
         self.chunk_index = chunk_index
+        self.system_prompt = system_prompt
 
     def build_prompt(self, user_query, retrieved_chunks):
         """
@@ -30,20 +38,7 @@ class PDFChatBot:
             content = meta.get("content", "")
             context_parts.append(f"[{section_title}] {content}")
         context_text = "\n\n".join(context_parts)
-        prompt = f"""
-
-Answer the user's question based on the information provided in the document context below. 
-Your response should reference the context clearly, but you may paraphrase or summarize appropriately. 
-
-=== Document Context ===
-{context_text}
-
-=== User Question ===
-{user_query}
-
-=== Answer ===
-
-"""
+        prompt = f"{self.system_prompt}\n\n=== Document Context ===\n{context_text}\n\n=== User Question ===\n{user_query}\n\n=== Answer ===\n"
         return prompt.strip()
 
     def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False):
