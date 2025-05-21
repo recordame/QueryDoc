@@ -134,14 +134,14 @@ def load_pdf(pdf_file, system_prompt, username):
     return sections, chunk_index, msg
 
 
-def ask_question(question, sections, chunk_index, system_prompt, username):
+def ask_question(question, sections, chunk_index, system_prompt, username, fine_only=False):
     if not username:
         return "Please log in first."
     if sections is None or chunk_index is None:
         return "Please upload and process a PDF first."
     prompt = system_prompt or DEFAULT_PROMPT
     bot = PDFChatBot(sections, chunk_index, system_prompt=prompt)
-    answer = bot.answer(question, fine_only=True)
+    answer = bot.answer(question, fine_only=fine_only)
     answer = answer.replace('<|endoftext|><|im_start|>user',"=== System Prompt ===")
     answer = answer.replace('<|im_end|>\n<|im_start|>assistant','')
     answer = answer.replace('<|im_end|>','')
@@ -181,6 +181,7 @@ with gr.Blocks() as demo:
                 gr.Markdown("- Ask a question based on the uploaded PDF.")
                 question_input = gr.Textbox(label="Question")
                 ask_btn = gr.Button("Ask", variant="primary")
+                use_index = gr.Checkbox(label="Use Index", value=True)
         gr.Markdown("### Answer")
         answer_output = gr.Textbox(label="Answer")
 
@@ -196,7 +197,7 @@ with gr.Blocks() as demo:
     )
     load_btn.click(load_pdf, inputs=[pdf_input, prompt_input, username_state], outputs=[sections_state, index_state, status])
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state], outputs=answer_output)
-    ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state], outputs=answer_output)
+    ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
 
 if __name__ == "__main__":
     demo.launch(server_port=30987, server_name="0.0.0.0")
