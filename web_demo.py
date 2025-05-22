@@ -337,7 +337,6 @@ with gr.Blocks() as demo:
             # Left column – previously uploaded files
             with gr.Column(scale=1):  
                 gr.Markdown("### Previously Uploaded PDFs")
-                gr.Markdown("- Select from previously uploaded PDFs.")
                 gr.Markdown("- The PDF will be loaded from the cache.")
                 gr.Markdown("- **Load Selected** will load the selected PDF.")
                 gr.Markdown("- **Load All Cached** will load all PDFs in the cache.")
