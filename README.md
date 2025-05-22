@@ -121,6 +121,7 @@ python web_demo.py
 
 
 ## Notes
+• V2 update: TBD
 
 • Models such as bge-m3 and Trillion-7B may take some time to download the first time they are loaded.
 
