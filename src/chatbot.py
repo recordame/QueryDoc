@@ -100,11 +100,20 @@ class PDFChatBot:
 
         best_chunks = fine_search_chunks(query_emb, chunk_index, relevant_secs, top_k=top_chunks, fine_only=fine_only)
 
-        # Improve Query 
-        query_improvement_prompt = "The user question is: " + query + "\n\n"
-        query_improvement_prompt += "The answer is: " + best_chunks[0]["metadata"]["content"] + "\n\n"
-        query_improvement_prompt += "Please generate a better question based on the answer above.\n\n"
-        query_improvement_prompt += "The improved question is: "
+        # Build a single string that contains the content of every retrieved chunk
+        combined_answer = "\n\n".join(
+            chunk["metadata"].get("content", "") for chunk in best_chunks
+        )
+
+        # Ask the LLM to improve the user query based on ALL retrieved evidence
+        query_improvement_prompt = (
+            "The user question is: " + query + "\n\n"
+            "The retrieved chunks are:\n" + combined_answer + "\n\n"
+            "Based on the retrieved chunks above, generate supplemental question(s) "
+            "that would help retrieve even more relevant information. "
+            "List the additional question(s) clearly.\n\n"
+            "The improved question is: "
+        )
         improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
      
         if fine_only:              
