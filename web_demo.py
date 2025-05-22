@@ -43,7 +43,7 @@ DEFAULT_PROMPT = (
 )
 
 # Max time (seconds) allowed for pdf_extractor.extract_pdf_content
-EXTRACT_TIMEOUT = 300  # 5 minutes
+EXTRACT_TIMEOUT = 120  # 2 minutes
 
 # In‑memory view of the persistent database
 _USER_DB = _load_user_db()
@@ -266,7 +266,7 @@ with gr.Blocks() as demo:
             with gr.Column(scale=1): 
                 gr.Markdown("### Upload New PDF")
                 gr.Markdown("- Upload a new PDF file.")
-                gr.Markdown("- Timeout for processing is 5 minutes.")
+                gr.Markdown("- Timeout for processing is 2 minutes.")
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
                 load_btn = gr.Button("Load PDF", variant="primary")
 
@@ -308,7 +308,5 @@ with gr.Blocks() as demo:
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
 
-if __name__ == "__main__":
-    demo.queue(concurrency_count=8,      
-            max_size=40)             
+if __name__ == "__main__":            
     demo.launch(server_name="0.0.0.0", server_port=30987)
