@@ -184,22 +184,27 @@ with gr.Blocks() as demo:
     # Main interaction area – hidden until login is successful
     with gr.Column(visible=False) as main_area:
         with gr.Row():
-            with gr.Column():
-                with gr.Row():
+            with gr.Row():
+                # Left column – previously uploaded files
+                with gr.Column():
                     gr.Markdown("### Previously Uploaded PDFs")
                     existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
-                    load_existing_btn = gr.Button("Load Selected", variant="primary")
+                    load_existing_btn = gr.Button("Load Selected", variant="secondary")
+
+                # Right column – new upload
+                with gr.Column():
                     gr.Markdown("### Upload PDF")
                     gr.Markdown("- Upload a PDF file to query.")
+                    pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
+                    load_btn = gr.Button("Load PDF", variant="primary")
 
-                pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
-                load_btn = gr.Button("Load PDF", variant="primary")
-                status = gr.Textbox(label="PDF Status", interactive=False)
-                gr.Markdown("### System Prompt")
-                gr.Markdown("- Customize the system prompt for the PDF query.")
-                gr.Markdown("- The system prompt will be used to guide the response.")
-                gr.Markdown("- The system prompt will be saved for future use under same Username/Password.")
-                prompt_input = gr.Textbox(label="System Prompt", lines=10, value=DEFAULT_PROMPT)
+            # PDF status textbox below the two columns
+            status = gr.Textbox(label="PDF Status", interactive=False)
+        gr.Markdown("### System Prompt")
+        gr.Markdown("- Customize the system prompt for the PDF query.")
+        gr.Markdown("- The system prompt will be used to guide the response.")
+        gr.Markdown("- The system prompt will be saved for future use under same Username/Password.")
+        prompt_input = gr.Textbox(label="System Prompt", lines=10, value=DEFAULT_PROMPT)
 
         with gr.Row():
             with gr.Column():
