@@ -260,6 +260,50 @@ def load_all_cached_pdfs(username):
     return all_sections, all_chunks, msg
 
 
+def delete_cached_pdf(selected_name, username):
+    """
+    Delete a previously uploaded PDF and its cached data for the user.
+    Returns updated dropdown choices and a status message.
+    """
+    if not username:
+        return None, None, gr.update(), "Please log in first."
+    if not selected_name:
+        return None, None, gr.update(), "No PDF selected."
+    user_dir = ensure_user_dir(username)
+    pdf_path = os.path.join(user_dir, selected_name)
+    if not os.path.exists(pdf_path):
+        return None, None, gr.update(), "File not found."
+
+    # Remove pdf file
+    try:
+        os.remove(pdf_path)
+    except OSError as e:
+        return None, None, gr.update(), f"Delete failed: {e}"
+
+    # Remove cached section/index files
+    pdf_basename = os.path.splitext(selected_name)[0]
+    sec_path, idx_path = _cache_paths(user_dir, pdf_basename)
+    for p in (sec_path, idx_path):
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except OSError:
+                pass  # ignore
+
+    # Update user DB
+    with _DB_LOCK:
+        uploads = _USER_DB["users"].get(username, {}).get("uploads", [])
+        if pdf_path in uploads:
+            uploads.remove(pdf_path)
+        _save_user_db(_USER_DB)
+
+    # Build new dropdown choices
+    choices = [os.path.basename(u) for u in uploads]
+    dropdown_update = gr.update(choices=choices, value=(choices[0] if choices else None))
+    msg = f"Deleted {selected_name}" if choices is not None else "All PDFs deleted."
+    return None, None, dropdown_update, msg
+
+
 def ask_question(question, sections, chunk_index, system_prompt, username, use_index):
     fine_only = not use_index 
     if not username:
@@ -297,10 +341,12 @@ with gr.Blocks() as demo:
                 gr.Markdown("- The PDF will be loaded from the cache.")
                 gr.Markdown("- **Load Selected** will load the selected PDF.")
                 gr.Markdown("- **Load All Cached** will load all PDFs in the cache.")
+                gr.Markdown("- **Delete Selected** will permanently remove the selected PDF and its cache.")
 
                 existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
                 load_existing_btn = gr.Button("Load Selected", variant="primary")
                 load_all_btn = gr.Button("Load All Cached", variant="secondary")
+                delete_btn = gr.Button("Delete Selected", variant="stop")
 
             # Right column – new upload
             with gr.Column(scale=1): 
@@ -351,6 +397,11 @@ with gr.Blocks() as demo:
         load_all_cached_pdfs,
         inputs=[username_state],
         outputs=[sections_state, index_state, status]
+    )
+    delete_btn.click(
+        delete_cached_pdf,
+        inputs=[existing_dropdown, username_state],
+        outputs=[sections_state, index_state, existing_dropdown, status]
     )
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
