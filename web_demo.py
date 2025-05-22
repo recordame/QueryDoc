@@ -183,23 +183,23 @@ with gr.Blocks() as demo:
 
     # Main interaction area – hidden until login is successful
     with gr.Column(visible=False) as main_area:
+        # First row ‑‑ two side‑by‑side upload panels
         with gr.Row():
-            with gr.Row():
-                # Left column – previously uploaded files
-                with gr.Column():
-                    gr.Markdown("### Previously Uploaded PDFs")
-                    existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
-                    load_existing_btn = gr.Button("Load Selected", variant="secondary")
+            # Left column – previously uploaded files
+            with gr.Column():
+                gr.Markdown("### Previously Uploaded PDFs")
+                existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
+                load_existing_btn = gr.Button("Load Selected", variant="secondary")
 
-                # Right column – new upload
-                with gr.Column():
-                    gr.Markdown("### Upload PDF")
-                    gr.Markdown("- Upload a PDF file to query.")
-                    pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
-                    load_btn = gr.Button("Load PDF", variant="primary")
+            # Right column – new upload
+            with gr.Column():
+                gr.Markdown("### Upload PDF")
+                gr.Markdown("- Upload a PDF file to query.")
+                pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
+                load_btn = gr.Button("Load PDF", variant="primary")
 
-            # PDF status textbox below the two columns
-            status = gr.Textbox(label="PDF Status", interactive=False)
+        # Second row ‑‑ status spans the full width
+        status = gr.Textbox(label="PDF Status", interactive=False)
         gr.Markdown("### System Prompt")
         gr.Markdown("- Customize the system prompt for the PDF query.")
         gr.Markdown("- The system prompt will be used to guide the response.")
