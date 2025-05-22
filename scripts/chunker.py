@@ -7,7 +7,9 @@ import json
 from typing import List, Dict, Any
 from src.utils.text_cleaning import basic_clean_text
 
-CHUNK_SIZE = 1000 # 글자 기준 (예: 500자씩)
+# Tune these two to balance chunk length and redundancy
+CHUNK_SIZE = 1500  # characters per chunk
+OVERLAP = 200      # characters of overlap between consecutive chunks
 
 def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
     """
@@ -24,16 +26,27 @@ def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
             break
     return current_section
 
-def chunk_text(text: str, chunk_size: int) -> List[str]:
+def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
+    """
+    Split text into chunks of `chunk_size` characters with `overlap` characters
+    of context shared between consecutive chunks.
+    """
     text = basic_clean_text(text)
+    if not text:
+        return []
+
     chunks = []
     start = 0
+    step = max(chunk_size - overlap, 1)  # avoid infinite loop if overlap >= size
+
     while start < len(text):
         end = start + chunk_size
         chunk_str = text[start:end].strip()
         if chunk_str:
             chunks.append(chunk_str)
-        start = end
+        if end >= len(text):
+            break
+        start += step
     return chunks
 
 def process_extracted_file(json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -52,7 +65,7 @@ def process_extracted_file(json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     for page_idx, text in enumerate(pages_text):
         section_title = get_section_of_page(page_idx, toc)
         # chunkify
-        splitted = chunk_text(text, CHUNK_SIZE)
+        splitted = chunk_text(text, CHUNK_SIZE, OVERLAP)
         for c_i, c_text in enumerate(splitted):
             chunked_result.append({
                 "file_path": pdf_path,
