@@ -196,14 +196,14 @@ with gr.Blocks(
         # First row -- two side-by-side upload panels
         with gr.Row(elem_classes="upload-row"):
             # Left panel – previously uploaded files
-            with gr.Box(elem_classes="upload-panel", scale=1):
+            with gr.Group(elem_classes="upload-panel", scale=1):
                 gr.Markdown("### Previously Uploaded PDFs")
                 gr.Markdown("- Select from previously uploaded PDFs.")
                 existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
                 load_existing_btn = gr.Button("Load Selected", variant="primary")
 
             # Right panel – new upload
-            with gr.Box(elem_classes="upload-panel", scale=1):
+            with gr.Group(elem_classes="upload-panel", scale=1):
                 gr.Markdown("### Upload New PDF")
                 gr.Markdown("- Upload a new PDF file.")
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
