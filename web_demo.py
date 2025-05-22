@@ -200,7 +200,7 @@ def load_pdf(pdf_file, system_prompt, username):
 
 
 # Helper to load an existing PDF by name for the user
-def load_existing_pdf(selected_name, system_prompt, username):
+def load_existing_pdf(selected_name, username):
     if not username:
         return None, None, "Please log in first."
     if not selected_name:
@@ -222,6 +222,42 @@ def load_existing_pdf(selected_name, system_prompt, username):
     else:
         msg = f"Loaded cached data for {selected_name}"
     return sections, chunk_index, msg
+
+
+def load_all_cached_pdfs(username):
+    """
+    Load sections + chunk index for every PDF the user has previously uploaded.
+    Sections are concatenated in upload order; chunk indexes are merged.
+    """
+    if not username:
+        return None, None, "Please log in first."
+    user_dir = ensure_user_dir(username)
+    uploads = _USER_DB["users"].get(username, {}).get("uploads", [])
+    if not uploads:
+        return None, None, "No cached PDFs were found."
+
+    all_sections = []
+    all_chunks = []
+    for pdf_path in uploads:
+        pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
+        sections, chunk_index = _load_cache(user_dir, pdf_basename)
+        if sections is None or chunk_index is None:
+            # Skip files that were never processed / cache missing
+            continue
+        # Tag each section with its source PDF name
+        tagged_sections = []
+        for sec in sections:
+            sec_copy = sec.copy()
+            sec_copy["file_name"] = pdf_basename  # add filename field
+            tagged_sections.append(sec_copy)
+        all_sections.extend(tagged_sections)
+        all_chunks.extend(chunk_index)
+
+    if not all_sections:
+        return None, None, "No cached data found. Process PDFs first."
+
+    msg = f"Loaded cached data for {len(all_sections)} sections across {len(uploads)} PDFs"
+    return all_sections, all_chunks, msg
 
 
 def ask_question(question, sections, chunk_index, system_prompt, username, use_index):
@@ -259,14 +295,20 @@ with gr.Blocks() as demo:
                 gr.Markdown("### Previously Uploaded PDFs")
                 gr.Markdown("- Select from previously uploaded PDFs.")
                 gr.Markdown("- The PDF will be loaded from the cache.")
+                gr.Markdown("- **Load Selected** will load the selected PDF.")
+                gr.Markdown("- **Load All Cached** will load all PDFs in the cache.")
+
                 existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
                 load_existing_btn = gr.Button("Load Selected", variant="primary")
+                load_all_btn = gr.Button("Load All Cached", variant="secondary")
 
             # Right column – new upload
             with gr.Column(scale=1): 
                 gr.Markdown("### Upload New PDF")
-                gr.Markdown("- Upload a new PDF file.")
-                gr.Markdown("- Timeout for processing is 2 minutes.")
+                gr.Markdown("- Upload a new PDF file. Timeout for processing is **2 minutes**.")
+                gr.Markdown("- **Load PDF** will process the uploaded PDF.")
+                gr.Markdown("- The PDF will be cached for future use under same Username/Password.")
+
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
                 load_btn = gr.Button("Load PDF", variant="primary")
 
@@ -302,7 +344,12 @@ with gr.Blocks() as demo:
     load_btn.click(load_pdf, inputs=[pdf_input, prompt_input, username_state], outputs=[sections_state, index_state, status])
     load_existing_btn.click(
         load_existing_pdf,
-        inputs=[existing_dropdown, prompt_input, username_state],
+        inputs=[existing_dropdown, username_state],
+        outputs=[sections_state, index_state, status]
+    )
+    load_all_btn.click(
+        load_all_cached_pdfs,
+        inputs=[username_state],
         outputs=[sections_state, index_state, status]
     )
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
