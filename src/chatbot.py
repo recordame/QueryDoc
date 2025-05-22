@@ -60,7 +60,7 @@ class PDFChatBot:
         prompt = f"{self.system_prompt}\n\n=== Document Context ===\n{context_text}\n\n=== User Question ===\n{user_query}\n\n=== Answer ===\n"
         return prompt.strip()
 
-    def answer(self, query: str, beta: float = 0.3, top_sections: int = 5, top_chunks: int = 3, streaming=False, fine_only=False):
+    def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False, fine_only=False):
         """
         End‑to‑end answer generation pipeline.
 
