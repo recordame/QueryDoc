@@ -170,7 +170,17 @@ def ask_question(question, sections, chunk_index, system_prompt, username, use_i
     return answer
 
 
-with gr.Blocks() as demo:
+with gr.Blocks(
+    css="""
+    /* Ensure the two upload panels stretch to the same height */
+    .upload-row {align-items: stretch;}
+    .upload-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 340px;   /* tweak as needed */
+    }
+    """
+) as demo:
     gr.Markdown("## QueryDoc Web Demo")
 
     # Login components
@@ -183,17 +193,17 @@ with gr.Blocks() as demo:
 
     # Main interaction area – hidden until login is successful
     with gr.Column(visible=False) as main_area:
-        # First row ‑‑ two side‑by‑side upload panels
-        with gr.Row():
-            # Left column – previously uploaded files
-            with gr.Column(scale=1):  
+        # First row -- two side-by-side upload panels
+        with gr.Row(elem_classes="upload-row"):
+            # Left panel – previously uploaded files
+            with gr.Box(elem_classes="upload-panel", scale=1):
                 gr.Markdown("### Previously Uploaded PDFs")
                 gr.Markdown("- Select from previously uploaded PDFs.")
                 existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
                 load_existing_btn = gr.Button("Load Selected", variant="primary")
 
-            # Right column – new upload
-            with gr.Column(scale=1): 
+            # Right panel – new upload
+            with gr.Box(elem_classes="upload-panel", scale=1):
                 gr.Markdown("### Upload New PDF")
                 gr.Markdown("- Upload a new PDF file.")
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
