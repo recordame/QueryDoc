@@ -244,13 +244,12 @@ def load_all_cached_pdfs(username):
         if sections is None or chunk_index is None:
             # Skip files that were never processed / cache missing
             continue
-        # Tag each section with its source PDF name
-        tagged_sections = []
+        # Prefix each section title with the source PDF name
         for sec in sections:
             sec_copy = sec.copy()
-            sec_copy["file_name"] = pdf_basename  # add filename field
-            tagged_sections.append(sec_copy)
-        all_sections.extend(tagged_sections)
+            if "title" in sec_copy:
+                sec_copy["title"] = f"{pdf_basename}_{sec_copy['title']}"
+            all_sections.append(sec_copy)
         all_chunks.extend(chunk_index)
 
     if not all_sections:
