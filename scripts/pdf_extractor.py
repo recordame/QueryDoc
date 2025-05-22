@@ -11,7 +11,10 @@ import pytesseract
 from PIL import Image
 import pandas as pd
 import numpy as np
+import cv2
 from sklearn.cluster import KMeans
+# pdfplumber re‑raises most parsing issues as pdfminer.six exceptions
+from pdfminer.pdfparser import PDFSyntaxError
 
 def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str, Any]]:
     sections = []
@@ -30,34 +33,48 @@ def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str,
         })
     return sections
 
-def build_sections_from_layout(pdf_path: str, font_size_threshold: float = 14.0) -> List[Dict[str, Any]]:
-
+def build_sections_from_layout(pdf_path: str,
+                               font_size_threshold: float = 14.0) -> List[Dict[str, Any]]:
+    """
+    Attempt to infer section breaks by scanning for heading‑sized fonts.
+    If pdfplumber cannot open the file (corrupted / non‑PDF wrapper),
+    gracefully fall back by returning an empty list so the caller can
+    revert to page‑based segmentation.
+    """
     candidate_headings = []
-    with pdfplumber.open(pdf_path) as pdf:
-        total_pages = len(pdf.pages)
-        for page in pdf.pages:
-            words = page.extract_words(extra_attrs=["size", "fontname"])
-            for word in words:
-                size = word.get("size", 0)
-                text = word.get("text", "")
-                if size >= font_size_threshold and any(kw.lower() in text.lower() for kw in ["chapter", "section", "part", "장", "절"]):
-                    candidate_headings.append({
-                        "page": page.page_number,
-                        "text": text,
-                        "font_size": size
-                    })
-        candidate_headings.sort(key=lambda x: x["page"])
-    
+
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            total_pages = len(pdf.pages)
+            for page in pdf.pages:
+                words = page.extract_words(extra_attrs=["size", "fontname"])
+                for word in words:
+                    size = word.get("size", 0.0)
+                    text = word.get("text", "")
+                    if (
+                        size >= font_size_threshold and
+                        any(kw.lower() in text.lower()
+                            for kw in ("chapter", "section", "part", "장", "절"))
+                    ):
+                        candidate_headings.append({
+                            "page": page.page_number,
+                            "text": text,
+                            "font_size": size
+                        })
+            candidate_headings.sort(key=lambda x: x["page"])
+    except (PDFSyntaxError, Exception) as e:
+        # Most commonly: "No /Root object! - Is this really a PDF?"
+        print(f"[WARN] pdfplumber failed to parse '{pdf_path}': {e}")
+        return []
+
     sections = []
     if candidate_headings:
-        for i, heading in enumerate(candidate_headings):
-            start_page = heading["page"]
-            if i < len(candidate_headings) - 1:
-                end_page = candidate_headings[i+1]["page"] - 1
-            else:
-                end_page = total_pages
+        for i, h in enumerate(candidate_headings):
+            start_page = h["page"]
+            end_page = (candidate_headings[i + 1]["page"] - 1
+                        if i < len(candidate_headings) - 1 else total_pages)
             sections.append({
-                "title": heading["text"],
+                "title": h["text"],
                 "start_page": start_page,
                 "end_page": end_page,
                 "method": "Layout"
@@ -72,10 +89,15 @@ def ocr_page_words(page, dpi: int = 350, lang: str = "kor+eng") -> pd.DataFrame:
     zoom = dpi / 72
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
     img = Image.open(io.BytesIO(pix.tobytes("png")))
+    # --- Pre‑process for Korean OCR: grayscale + Otsu binarization ---
+    img_np = np.array(img)
+    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    img = Image.fromarray(thresh)
     df = pytesseract.image_to_data(
         img,
         lang=lang,
-        config="--oem 3 --psm 3",
+        config="--oem 1 --psm 3 -c preserve_interword_spaces=1",
         output_type=pytesseract.Output.DATAFRAME
     )
     df = df[(df.conf != -1) & df.text.notnull()].copy()

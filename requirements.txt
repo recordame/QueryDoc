@@ -24,3 +24,4 @@ pillow
 pytesseract
 scikit-learn
 gradio
+opencv-python
