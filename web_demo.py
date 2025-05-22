@@ -5,6 +5,8 @@ import shutil
 from typing import Tuple
 import json
 import threading
+import concurrent.futures
+import pickle
 
 import gradio as gr
 
@@ -39,6 +41,9 @@ DEFAULT_PROMPT = (
     "Answer the user's question based on the information provided in the document context below.\n"
     "Your response should reference the context clearly, but you may paraphrase or summarize appropriately."
 )
+
+# Max time (seconds) allowed for pdf_extractor.extract_pdf_content
+EXTRACT_TIMEOUT = 300  # 5 minutes
 
 # In‑memory view of the persistent database
 _USER_DB = _load_user_db()
@@ -107,12 +112,63 @@ def login_and_prepare(username: str, password: str):
     return success, uid, msg, main_area_update, prompt_update, dropdown_update
 
 
-def process_pdf(pdf_path: str) -> Tuple[list, list]:
-    """Run the extraction/index pipeline for the given PDF."""
-    extracted = pdf_extractor.extract_pdf_content(pdf_path)
+
+# ---------------------------------------------------------------------
+# Extraction cache helpers (per‑user, per‑PDF)
+# ---------------------------------------------------------------------
+def _cache_paths(user_dir: str, pdf_basename: str):
+    """Return tuple (sections_path, index_path) inside the user directory."""
+    sec_path = os.path.join(user_dir, f"{pdf_basename}_sections.json")
+    idx_path = os.path.join(user_dir, f"{pdf_basename}_index.pkl")
+    return sec_path, idx_path
+
+def _save_cache(user_dir: str, pdf_basename: str,
+                sections: list, chunk_index: list):
+    sec_path, idx_path = _cache_paths(user_dir, pdf_basename)
+    with open(sec_path, "w", encoding="utf-8") as f:
+        json.dump(sections, f, ensure_ascii=False, indent=2)
+    with open(idx_path, "wb") as f:
+        pickle.dump(chunk_index, f)
+
+def _load_cache(user_dir: str, pdf_basename: str):
+    sec_path, idx_path = _cache_paths(user_dir, pdf_basename)
+    if os.path.exists(sec_path) and os.path.exists(idx_path):
+        try:
+            with open(sec_path, "r", encoding="utf-8") as f:
+                sections = json.load(f)
+            with open(idx_path, "rb") as f:
+                chunk_index = pickle.load(f)
+            return sections, chunk_index
+        except Exception:
+            # corrupted cache – ignore
+            pass
+    return None, None
+
+
+def process_pdf(pdf_path: str, user_dir: str, timeout: int = EXTRACT_TIMEOUT) -> Tuple[list, list]:
+    """
+    Run the extraction/index pipeline with a timeout guard.
+    Results are cached to disk inside user_dir for later reuse.
+    """
+    pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
+
+    # Run extractor with timeout
+    def _do_extract():
+        return pdf_extractor.extract_pdf_content(pdf_path)
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(_do_extract)
+            extracted = future.result(timeout=timeout)
+    except concurrent.futures.TimeoutError:
+        raise RuntimeError("PDF extraction timed out (over 2 minutes).")
+
     chunks = chunker.process_extracted_file(extracted)
     chunk_index = build_index.build_chunk_index(chunks)
     sections = section_rep_builder.build_section_reps(extracted["sections"], chunk_index)
+
+    # Save to cache
+    _save_cache(user_dir, pdf_basename, sections, chunk_index)
     return sections, chunk_index
 
 
@@ -124,8 +180,11 @@ def load_pdf(pdf_file, system_prompt, username):
     user_dir = ensure_user_dir(username)
     dest_path = os.path.join(user_dir, os.path.basename(pdf_file.name))
     shutil.copy(pdf_file.name, dest_path)
-    sections, chunk_index = process_pdf(dest_path)
-    msg = f"Processed {os.path.basename(dest_path)}"
+    try:
+        sections, chunk_index = process_pdf(dest_path, user_dir)
+        msg = f"Processed {os.path.basename(dest_path)}"
+    except RuntimeError as e:
+        return None, None, str(e)
     # Record upload & system prompt for this user and persist
     with _DB_LOCK:
         user_record = _USER_DB["users"].setdefault(
@@ -150,8 +209,18 @@ def load_existing_pdf(selected_name, system_prompt, username):
     pdf_path = os.path.join(user_dir, selected_name)
     if not os.path.exists(pdf_path):
         return None, None, "File not found."
-    sections, chunk_index = process_pdf(pdf_path)
-    msg = f"Processed {selected_name}"
+
+    # Attempt to load cached sections/index
+    pdf_basename = os.path.splitext(selected_name)[0]
+    sections, chunk_index = _load_cache(user_dir, pdf_basename)
+    if sections is None or chunk_index is None:
+        try:
+            sections, chunk_index = process_pdf(pdf_path, user_dir)
+            msg = f"Processed {selected_name}"
+        except RuntimeError as e:
+            return None, None, str(e)
+    else:
+        msg = f"Loaded cached data for {selected_name}"
     return sections, chunk_index, msg
 
 
@@ -189,6 +258,7 @@ with gr.Blocks() as demo:
             with gr.Column(scale=1):  
                 gr.Markdown("### Previously Uploaded PDFs")
                 gr.Markdown("- Select from previously uploaded PDFs.")
+                gr.Markdown("- The PDF will be loaded from the cache.")
                 existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
                 load_existing_btn = gr.Button("Load Selected", variant="primary")
 
@@ -196,6 +266,7 @@ with gr.Blocks() as demo:
             with gr.Column(scale=1): 
                 gr.Markdown("### Upload New PDF")
                 gr.Markdown("- Upload a new PDF file.")
+                gr.Markdown("- Timeout for processing is 5 minutes.")
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
                 load_btn = gr.Button("Load PDF", variant="primary")
 
@@ -238,4 +309,6 @@ with gr.Blocks() as demo:
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
 
 if __name__ == "__main__":
-    demo.launch(server_port=30987, server_name="0.0.0.0")
+    demo.queue(concurrency_count=8,      
+            max_size=40)             
+    demo.launch(server_name="0.0.0.0", server_port=30987)
