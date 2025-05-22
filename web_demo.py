@@ -84,6 +84,7 @@ def login_and_prepare(username: str, password: str):
         - login message (str)
         - update for the main interaction area (gr.update)
         - update for the prompt textbox (gr.update)
+        - update for the existing‑PDF dropdown (gr.update)
     """
     success, uid, msg = login(username, password)
 
@@ -98,7 +99,12 @@ def login_and_prepare(username: str, password: str):
             prompt_val = prompts[-1]
     prompt_update = gr.update(value=prompt_val)
 
-    return success, uid, msg, main_area_update, prompt_update
+    # Populate dropdown with user's previous uploads
+    uploads = _USER_DB["users"].get(uid, {}).get("uploads", []) if success else []
+    dropdown_update = gr.update(choices=[os.path.basename(u) for u in uploads],
+                                value=(os.path.basename(uploads[0]) if uploads else None))
+
+    return success, uid, msg, main_area_update, prompt_update, dropdown_update
 
 
 def process_pdf(pdf_path: str) -> Tuple[list, list]:
@@ -134,6 +140,21 @@ def load_pdf(pdf_file, system_prompt, username):
     return sections, chunk_index, msg
 
 
+# Helper to load an existing PDF by name for the user
+def load_existing_pdf(selected_name, system_prompt, username):
+    if not username:
+        return None, None, "Please log in first."
+    if not selected_name:
+        return None, None, "No previous PDF selected."
+    user_dir = ensure_user_dir(username)
+    pdf_path = os.path.join(user_dir, selected_name)
+    if not os.path.exists(pdf_path):
+        return None, None, "File not found."
+    sections, chunk_index = process_pdf(pdf_path)
+    msg = f"Processed {selected_name}"
+    return sections, chunk_index, msg
+
+
 def ask_question(question, sections, chunk_index, system_prompt, username, use_index):
     fine_only = not use_index 
     if not username:
@@ -164,6 +185,9 @@ with gr.Blocks() as demo:
     with gr.Column(visible=False) as main_area:
         with gr.Row():
             with gr.Column():
+                gr.Markdown("### Previously Uploaded PDFs")
+                existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
+                load_existing_btn = gr.Button("Load Selected", variant="secondary")
                 gr.Markdown("### Upload PDF")
                 gr.Markdown("- Upload a PDF file to query.")
 
@@ -195,9 +219,14 @@ with gr.Blocks() as demo:
     login_btn.click(
         login_and_prepare,
         inputs=[login_user, login_pass],
-        outputs=[logged_in_state, username_state, login_status, main_area, prompt_input],
+        outputs=[logged_in_state, username_state, login_status, main_area, prompt_input, existing_dropdown],
     )
     load_btn.click(load_pdf, inputs=[pdf_input, prompt_input, username_state], outputs=[sections_state, index_state, status])
+    load_existing_btn.click(
+        load_existing_pdf,
+        inputs=[existing_dropdown, prompt_input, username_state],
+        outputs=[sections_state, index_state, status]
+    )
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state], outputs=answer_output)
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
 
