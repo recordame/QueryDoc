@@ -8,7 +8,9 @@ class EmbeddingModel:
         """
         Load the model and move it to the specified device.
         """
-        self.model = SentenceTransformer(model_name, trust_remote_code=True)
+        self.model = SentenceTransformer(model_name,
+                                         cache_folder="data/hub", 
+                                         trust_remote_code=True)
         self.device = device
         if device in ["cuda", "mps"]:
             self.model.to(self.device)

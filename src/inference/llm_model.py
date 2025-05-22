@@ -10,14 +10,14 @@ class LocalLLM:
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
             trust_remote_code=True,
-                        cache_dir="/home/user/data/hub",
+            cache_dir="data/hub",
             padding_side='left',
         )
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
             attn_implementation=attn_implementation,
-                        cache_dir="/home/user/data/hub",
+            cache_dir="data/hub",
             trust_remote_code=True,
         ).to(self.device)
 

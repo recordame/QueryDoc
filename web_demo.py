@@ -134,7 +134,8 @@ def load_pdf(pdf_file, system_prompt, username):
     return sections, chunk_index, msg
 
 
-def ask_question(question, sections, chunk_index, system_prompt, username, fine_only=False):
+def ask_question(question, sections, chunk_index, system_prompt, username, use_index):
+    fine_only = not use_index 
     if not username:
         return "Please log in first."
     if sections is None or chunk_index is None:
@@ -181,8 +182,8 @@ with gr.Blocks() as demo:
                 gr.Markdown("- Ask a question based on the uploaded PDF.")
                 gr.Markdown("- Check **Coarse-to-Fine Search** to enable Table of Contents based search.")
                 question_input = gr.Textbox(label="Question")
-                ask_btn = gr.Button("Ask", variant="primary")
                 use_index = gr.Checkbox(label="Coarse-to-Fine Search", value=False)
+                ask_btn = gr.Button("Ask", variant="primary")
         gr.Markdown("### Answer")
         answer_output = gr.Textbox(label="Answer")
 

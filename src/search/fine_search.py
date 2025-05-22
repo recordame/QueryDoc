@@ -32,15 +32,16 @@ def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10, fine_o
       chunk. The chunks are then sorted in descending order of similarity and the
       top *k* results are returned.
     """
+
     section_titles = [sec["title"] for sec in target_sections]
-    if fine_only:
-        candidates = chunk_index
-    else:
+    candidates = chunk_index
+    if not fine_only:
         candidates = [
-            item for item in chunk_index
+            item for item in candidates
             if item["metadata"]["section_title"] in section_titles
         ]
-
+        if len(candidates) == 0:
+            candidates = chunk_index
     results = []
     qv = np.array(query_emb)
     q_norm = np.linalg.norm(qv)
@@ -52,6 +53,7 @@ def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10, fine_o
         results.append((cos_val, c))
 
     results.sort(key=lambda x: x[0], reverse=True)
+
     top_results = [r[1] for r in results[:top_k]]
     return top_results
     

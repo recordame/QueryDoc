@@ -90,7 +90,7 @@ if __name__ == "__main__":
     output_folder = os.path.join("data", "extracted")
     os.makedirs(output_folder, exist_ok=True)
 
-    pdf_files = [f for f in os.listdir(pdf_folder) if f.endswith(".pdf")]
+    pdf_files = [f for f in os.listdir(pdf_folder) if f.lower().endswith(".pdf")]
     if not pdf_files:
         print(f"[ERROR] No PDF files found in '{pdf_folder}'.")
         sys.exit(1)
