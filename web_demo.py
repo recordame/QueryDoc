@@ -202,7 +202,7 @@ with gr.Blocks() as demo:
         # Second row ‑‑ status spans the full width
         status = gr.Textbox(label="PDF Status", interactive=False)
         gr.Markdown("### System Prompt")
-        gr.Markdown("- Customize the system prompt for the PDF query.")
+        gr.Markdown("- Customize the system prompt for the PDF.")
         gr.Markdown("- The system prompt will be used to guide the response.")
         gr.Markdown("- The system prompt will be saved for future use under same Username/Password.")
         prompt_input = gr.Textbox(label="System Prompt", lines=10, value=DEFAULT_PROMPT)

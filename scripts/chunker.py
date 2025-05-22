@@ -8,16 +8,15 @@ from typing import List, Dict, Any
 from src.utils.text_cleaning import basic_clean_text
 
 # Tune these two to balance chunk length and redundancy
-CHUNK_SIZE = 1500  # characters per chunk
+CHUNK_SIZE = 1200  # characters per chunk
 OVERLAP = 200      # characters of overlap between consecutive chunks
 
 def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
     """
-    PDF ToC: [(level, title, start_page), ...]
-    page_num는 0-based, start_page는 1-based
-    page_num+1 >= start_page => 해당 섹션
-    단순한 방식으로 현재 섹션 제목을 식별
-    """
+    Get the section title for a given page number based on the table of contents.
+    toc: List of tuples (level, title, start_page)
+    page_num: 0-indexed page number
+    """ 
     current_section = "Others"
     for (lvl, title, start_p) in toc:
         if page_num + 1 >= start_p:
