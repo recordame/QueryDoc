@@ -185,11 +185,12 @@ with gr.Blocks() as demo:
     with gr.Column(visible=False) as main_area:
         with gr.Row():
             with gr.Column():
-                gr.Markdown("### Previously Uploaded PDFs")
-                existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
-                load_existing_btn = gr.Button("Load Selected", variant="secondary")
-                gr.Markdown("### Upload PDF")
-                gr.Markdown("- Upload a PDF file to query.")
+                with gr.Row():
+                    gr.Markdown("### Previously Uploaded PDFs")
+                    existing_dropdown = gr.Dropdown(label="Select a PDF", choices=[])
+                    load_existing_btn = gr.Button("Load Selected", variant="primary")
+                    gr.Markdown("### Upload PDF")
+                    gr.Markdown("- Upload a PDF file to query.")
 
                 pdf_input = gr.File(label="PDF File", file_types=[".pdf"])
                 load_btn = gr.Button("Load PDF", variant="primary")
