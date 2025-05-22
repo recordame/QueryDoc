@@ -234,7 +234,7 @@ with gr.Blocks() as demo:
         inputs=[existing_dropdown, prompt_input, username_state],
         outputs=[sections_state, index_state, status]
     )
-    question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state], outputs=answer_output)
+    question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
 
 if __name__ == "__main__":
