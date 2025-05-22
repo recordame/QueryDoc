@@ -23,6 +23,7 @@ QueryDoc/
 │       ├─ init.py
 │       └─ text_cleaning.py
 ├─ data/
+│   ├─ extracted/
 │   ├─ chunks/
 │   ├─ index/
 │   └─ original/
@@ -40,6 +41,9 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+• For OCR features, install Tesseract and the appropriate language data, e.g.  
+  `sudo apt-get install tesseract-ocr tesseract-ocr-kor`   # Debian/Ubuntu
+
 (On Windows, activate with .\venv\Scripts\activate or a similar command.)
 
 2.	Extract PDF & Split into Chunks
@@ -98,7 +102,7 @@ curl -X POST http://localhost:8000/ask \
   -d '{"question": "What's egocentric AI agent?"}'
 ```
 
-8. Run the Web Demo
+9. Additional Web Demo Info
 ```bash
 python web_demo.py
 ```
@@ -118,12 +122,14 @@ python web_demo.py
 
 • Gradio: Interactive web demo framework.
 
-
+• pdfplumber: Layout‑aware PDF parsing  
+• pytesseract: OCR fallback engine  
+• Pillow: Image handling for OCR pipelines  
+• pandas: DataFrame operations for layout analysis  
+• scikit‑learn: KMeans clustering for multi‑column detection
 
 ## Notes
-• V2 update: TBD
 
 • Models such as bge-m3 and Trillion-7B may take some time to download the first time they are loaded.
 
 • Since section content is complemented using the average of section chunk embeddings (without a summarization model), very long sections may result in reduced search accuracy. (Utilizing a summarization model may be considered in the future.)
-

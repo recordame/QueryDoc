@@ -6,6 +6,12 @@ import sys
 import fitz  # PyMuPDF
 from typing import Dict, Any, List
 import pdfplumber
+import io
+import pytesseract
+from PIL import Image
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
 
 def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str, Any]]:
     sections = []
@@ -58,20 +64,109 @@ def build_sections_from_layout(pdf_path: str, font_size_threshold: float = 14.0)
             })
     return sections
 
-def extract_pdf_content(pdf_path: str) -> Dict[str, Any]:
+# ────────────────────────────────────────────────
+# OCR and multi‑column handling helpers
+# ────────────────────────────────────────────────
+def ocr_page_words(page, dpi: int = 350, lang: str = "kor+eng") -> pd.DataFrame:
+    """Render a page to high‑DPI PNG and return a DataFrame of word boxes."""
+    zoom = dpi / 72
+    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
+    img = Image.open(io.BytesIO(pix.tobytes("png")))
+    df = pytesseract.image_to_data(
+        img,
+        lang=lang,
+        config="--oem 3 --psm 3",
+        output_type=pytesseract.Output.DATAFRAME
+    )
+    df = df[(df.conf != -1) & df.text.notnull()].copy()
+    df.rename(columns={"left": "x0", "top": "y0"}, inplace=True)
+    df["x1"] = df.x0 + df.width
+    df["y1"] = df.y0 + df.height
+    return df[["x0", "y0", "x1", "y1", "text"]]
+
+def is_multicol(df: pd.DataFrame, page_width: float, gap_ratio_thr: float = 0.15) -> bool:
+    """Return True if the page likely has multiple text columns."""
+    if len(df) < 30:
+        return False
+    centers = ((df.x0 + df.x1) / 2).to_numpy()
+    centers.sort()
+    gaps = np.diff(centers)
+    return (gaps.max() / page_width) > gap_ratio_thr
+
+def assign_columns_kmeans(df: pd.DataFrame, max_cols: int = 3) -> pd.DataFrame:
+    """Cluster words into columns using 1‑D KMeans and label them."""
+    k = min(max_cols, len(df))
+    km = KMeans(n_clusters=k, n_init="auto").fit(
+        ((df.x0 + df.x1) / 2).to_numpy().reshape(-1, 1)
+    )
+    df["col"] = km.labels_
+    order = df.groupby("col").x0.min().sort_values().index.tolist()
+    df["col"] = df.col.map({old: new for new, old in enumerate(order)})
+    return df
+
+def rebuild_text_from_columns(df: pd.DataFrame, line_tol: int = 8) -> str:
+    """Reconstruct reading order: left‑to‑right columns, then top‑to‑bottom."""
+    lines = []
+    for col in sorted(df.col.unique()):
+        col_df = df[df.col == col].sort_values(["y0", "x0"])
+        current, last_top = [], None
+        for _, w in col_df.iterrows():
+            if last_top is None or abs(w.y0 - last_top) <= line_tol:
+                current.append(w.text)
+            else:
+                lines.append(" ".join(current))
+                current = [w.text]
+            last_top = w.y0
+        if current:
+            lines.append(" ".join(current))
+    return "\n".join(lines)
+
+def extract_pdf_content(pdf_path: str,
+                       ocr_lang: str = "kor+eng",
+                       ocr_dpi: int = 350) -> Dict[str, Any]:
+    """Extract text from a PDF with optional OCR and column reordering."""
     doc = fitz.open(pdf_path)
     total_pages = len(doc)
-    pages_text = [doc[i].get_text("text") for i in range(total_pages)]
-    
-    toc = doc.get_toc(simple=True)  # get_toc 사용
-    
+    pages_text: List[str] = []
+
+    for i in range(total_pages):
+        page = doc[i]
+        raw_text = page.get_text("text").strip()
+
+        # Build a DataFrame of word boxes
+        if raw_text:
+            words = page.get_text("words")
+            words_df = pd.DataFrame(
+                words,
+                columns=["x0", "y0", "x1", "y1", "text", "_b", "_l", "_w"]
+            )[["x0", "y0", "x1", "y1", "text"]]
+        else:
+            words_df = ocr_page_words(page, dpi=ocr_dpi, lang=ocr_lang)
+
+        # Determine layout and rebuild text accordingly
+        if is_multicol(words_df, page.rect.width):
+            words_df = assign_columns_kmeans(words_df, max_cols=3)
+            page_text = rebuild_text_from_columns(words_df)
+        else:
+            page_text = " ".join(
+                w.text for _, w in
+                words_df.sort_values(["y0", "x0"]).iterrows()
+            )
+        pages_text.append(page_text)
+
+    toc = doc.get_toc(simple=True)  # using get_toc
     if toc:
         sections = build_sections_from_toc(toc, total_pages)
     else:
         sections = build_sections_from_layout(pdf_path)
         if not sections:
-            sections = [{"title": f"Page {i+1}", "start_page": i+1, "end_page": i+1, "method": "Page-based"} for i in range(total_pages)]
-    
+            sections = [{
+                "title": f"Page {i + 1}",
+                "start_page": i + 1,
+                "end_page": i + 1,
+                "method": "Page-based"
+            } for i in range(total_pages)]
+
     return {
         "file_path": pdf_path,
         "toc": toc,
@@ -85,7 +180,7 @@ def save_extracted_content(content: Dict[str, Any], output_path: str):
         json.dump(content, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
-    # 원본 PDF 파일을 저장할 별도 디렉토리 설정 (예: data/original)
+    # Directory for original PDFs (e.g., data/original)
     pdf_folder = os.path.join("data", "original")
     output_folder = os.path.join("data", "extracted")
     os.makedirs(output_folder, exist_ok=True)
@@ -94,8 +189,8 @@ if __name__ == "__main__":
     if not pdf_files:
         print(f"[ERROR] No PDF files found in '{pdf_folder}'.")
         sys.exit(1)
-    
-    # 여러 파일이 있으면 사용자에게 목록을 보여주고 하나만 선택하도록 함
+
+    # If multiple PDFs exist, show the list and let the user choose
     if len(pdf_files) > 1:
         print("Multiple PDF files found:")
         for idx, fname in enumerate(pdf_files):
@@ -122,10 +217,10 @@ if __name__ == "__main__":
     save_extracted_content(extracted_data, output_json)
     print(f"Processed {selected_file}: Found {len(extracted_data['sections'])} sections.")
 
-    # For a single PDF, also save merged sections as sections.json.
+    # Also save merged sections as sections.json for convenience
     sections_output = os.path.join(output_folder, "sections.json")
     with open(sections_output, 'w', encoding='utf-8') as f:
         json.dump(extracted_data["sections"], f, ensure_ascii=False, indent=2)
     print(f"Sections saved to {sections_output}")
-    
+
     print("PDF Extraction Complete.")

@@ -19,4 +19,8 @@ uvicorn
 
 # numpy for vector operations
 numpy
+pandas
+pillow
+pytesseract
+scikit-learn
 gradio
