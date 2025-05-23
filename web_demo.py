@@ -316,7 +316,10 @@ def ask_question(question, sections, chunk_index, system_prompt, username, use_i
     answer = answer.replace('<|endoftext|><|im_start|>user',"=== System Prompt ===")
     answer = answer.replace('<|im_end|>\n<|im_start|>assistant','')
     answer = answer.replace('<|im_end|>','')
-    return answer
+    answer_output = answer.split("=== Answer ===")[-1].strip()
+    reference_output = answer.split("=== User Question ===")[0].strip().split("=== Document Context ===")[-1].strip()
+
+    return answer_output, reference_output
 
 
 with gr.Blocks() as demo:
@@ -374,8 +377,9 @@ with gr.Blocks() as demo:
                 use_index = gr.Checkbox(label="Coarse-to-Fine Search", value=False)
                 ask_btn = gr.Button("Ask", variant="primary")
         gr.Markdown("### Answer")
-        answer_output = gr.Textbox(label="Answer")
-
+        answer_output = gr.Textbox(label="Answer", interactive=False, lines=10)
+        gr.Markdown("### References")
+        reference_output = gr.Textbox(label="References", interactive=False, lines=10)
     logged_in_state = gr.State(False)
     username_state = gr.State("")
     sections_state = gr.State()
@@ -402,8 +406,8 @@ with gr.Blocks() as demo:
         inputs=[existing_dropdown, username_state],
         outputs=[sections_state, index_state, existing_dropdown, status]
     )
-    question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
-    ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=answer_output)
+    question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=[answer_output, reference_output])
+    ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=[answer_output, reference_output])
 
 if __name__ == "__main__":            
     demo.launch(server_name="0.0.0.0", server_port=30987)
