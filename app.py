@@ -1,8 +1,8 @@
 # app.py
 
-import uvicorn
 import json
-import os
+
+import uvicorn
 from fastapi import FastAPI, Body
 
 from src.chatbot import PDFChatBot
@@ -21,6 +21,7 @@ with open(chunk_index_path, 'r', encoding='utf-8') as f:
 
 chatbot = PDFChatBot(sections_data, chunk_index_data)
 
+
 @app.post("/ask")
 def ask_question(question: str = Body(..., embed=True)):
     """
@@ -38,6 +39,7 @@ def ask_question(question: str = Body(..., embed=True)):
     """
     answer = chatbot.answer(question)
     return {"answer": answer}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

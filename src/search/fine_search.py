@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10, fine_only=False):
     """
     Find the most relevant text chunks within the specified sections.
@@ -56,4 +57,3 @@ def fine_search_chunks(query_emb, chunk_index, target_sections, top_k=10, fine_o
 
     top_results = [r[1] for r in results[:top_k]]
     return top_results
-    

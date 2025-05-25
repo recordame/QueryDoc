@@ -1,20 +1,21 @@
 # scripts/pdf_extractor.py
 
-import os
-import json
-import sys
-import fitz  # PyMuPDF
-from typing import Dict, Any, List
-import pdfplumber
 import io
+import json
+import os
+import sys
+from typing import Dict, Any, List
+
+import cv2
+import fitz  # PyMuPDF
+import numpy as np
+import pandas as pd
+import pdfplumber
 import pytesseract
 from PIL import Image
-import pandas as pd
-import numpy as np
-import cv2
-from sklearn.cluster import KMeans
-# pdfplumber re‑raises most parsing issues as pdfminer.six exceptions
 from pdfminer.pdfparser import PDFSyntaxError
+from sklearn.cluster import KMeans
+
 
 def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str, Any]]:
     sections = []
@@ -32,6 +33,7 @@ def build_sections_from_toc(toc: List[List], total_pages: int) -> List[Dict[str,
             "method": "TOC"
         })
     return sections
+
 
 def build_sections_from_layout(pdf_path: str,
                                font_size_threshold: float = 14.0) -> List[Dict[str, Any]]:
@@ -52,9 +54,9 @@ def build_sections_from_layout(pdf_path: str,
                     size = word.get("size", 0.0)
                     text = word.get("text", "")
                     if (
-                        size >= font_size_threshold and
-                        any(kw.lower() in text.lower()
-                            for kw in ("chapter", "section", "part", "장", "절"))
+                            size >= font_size_threshold and
+                            any(kw.lower() in text.lower()
+                                for kw in ("chapter", "section", "part", "장", "절"))
                     ):
                         candidate_headings.append({
                             "page": page.page_number,
@@ -81,6 +83,7 @@ def build_sections_from_layout(pdf_path: str,
             })
     return sections
 
+
 # ────────────────────────────────────────────────
 # OCR and multi‑column handling helpers
 # ────────────────────────────────────────────────
@@ -106,6 +109,7 @@ def ocr_page_words(page, dpi: int = 350, lang: str = "kor+eng") -> pd.DataFrame:
     df["y1"] = df.y0 + df.height
     return df[["x0", "y0", "x1", "y1", "text"]]
 
+
 def is_multicol(df: pd.DataFrame, page_width: float, gap_ratio_thr: float = 0.15) -> bool:
     """Return True if the page likely has multiple text columns."""
     if len(df) < 30:
@@ -114,6 +118,7 @@ def is_multicol(df: pd.DataFrame, page_width: float, gap_ratio_thr: float = 0.15
     centers.sort()
     gaps = np.diff(centers)
     return (gaps.max() / page_width) > gap_ratio_thr
+
 
 def assign_columns_kmeans(df: pd.DataFrame, max_cols: int = 3) -> pd.DataFrame:
     """Cluster words into columns using 1‑D KMeans and label them."""
@@ -125,6 +130,7 @@ def assign_columns_kmeans(df: pd.DataFrame, max_cols: int = 3) -> pd.DataFrame:
     order = df.groupby("col").x0.min().sort_values().index.tolist()
     df["col"] = df.col.map({old: new for new, old in enumerate(order)})
     return df
+
 
 def rebuild_text_from_columns(df: pd.DataFrame, line_tol: int = 8) -> str:
     """Reconstruct reading order: left‑to‑right columns, then top‑to‑bottom."""
@@ -143,9 +149,10 @@ def rebuild_text_from_columns(df: pd.DataFrame, line_tol: int = 8) -> str:
             lines.append(" ".join(current))
     return "\n".join(lines)
 
+
 def extract_pdf_content(pdf_path: str,
-                       ocr_lang: str = "kor+eng",
-                       ocr_dpi: int = 350) -> Dict[str, Any]:
+                        ocr_lang: str = "kor+eng",
+                        ocr_dpi: int = 350) -> Dict[str, Any]:
     """Extract text from a PDF with optional OCR and column reordering."""
     doc = fitz.open(pdf_path)
     total_pages = len(doc)
@@ -196,10 +203,12 @@ def extract_pdf_content(pdf_path: str,
         "sections": sections
     }
 
+
 def save_extracted_content(content: Dict[str, Any], output_path: str):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(content, f, ensure_ascii=False, indent=2)
+
 
 if __name__ == "__main__":
     # Directory for original PDFs (e.g., data/original)
@@ -215,34 +224,24 @@ if __name__ == "__main__":
     # If multiple PDFs exist, show the list and let the user choose
     if len(pdf_files) > 1:
         print("Multiple PDF files found:")
-        for idx, fname in enumerate(pdf_files):
-            print(f"{idx+1}. {fname}")
-        selection = input("Select a file by number: ")
-        try:
-            selection_idx = int(selection) - 1
-            if selection_idx < 0 or selection_idx >= len(pdf_files):
-                print("Invalid selection.")
-                sys.exit(1)
-            selected_file = pdf_files[selection_idx]
-        except ValueError:
-            print("Invalid input.")
-            sys.exit(1)
-    else:
-        selected_file = pdf_files[0]
 
-    pdf_path = os.path.join(pdf_folder, selected_file)
-    print(f"Processing file: {selected_file}")
-    extracted_data = extract_pdf_content(pdf_path)
+        for selected_file in pdf_files:
+            pdf_path = os.path.join(pdf_folder, selected_file)
+            print(f"Processing file: {selected_file}")
 
-    base_name = os.path.splitext(selected_file)[0]
-    output_json = os.path.join(output_folder, f"{base_name}.json")
-    save_extracted_content(extracted_data, output_json)
-    print(f"Processed {selected_file}: Found {len(extracted_data['sections'])} sections.")
+            extracted_data = extract_pdf_content(pdf_path)
 
-    # Also save merged sections as sections.json for convenience
-    sections_output = os.path.join(output_folder, "sections.json")
-    with open(sections_output, 'w', encoding='utf-8') as f:
-        json.dump(extracted_data["sections"], f, ensure_ascii=False, indent=2)
-    print(f"Sections saved to {sections_output}")
+            base_name = os.path.splitext(selected_file)[0]
+            output_json = os.path.join(output_folder, f"{base_name}.json")
+            save_extracted_content(extracted_data, output_json)
 
-    print("PDF Extraction Complete.")
+            print(f"Processed {selected_file}: Found {len(extracted_data['sections'])} sections.")
+
+            # Also, save merged sections as sections.json for convenience
+            sections_output = os.path.join(output_folder, f"{base_name}-sections.json")
+            sections = extracted_data['sections']
+            with open(sections_output, 'w', encoding='utf-8') as f:
+                json.dump(sections, f, ensure_ascii=False, indent=2)
+
+            print(f"Sections saved to {sections_output}")
+            print("PDF Extraction Complete.")

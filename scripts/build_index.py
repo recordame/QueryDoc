@@ -1,11 +1,12 @@
 # scripts/build_index.py
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
-import numpy as np
 from src.inference.embedding_model import embedding_model
+
 
 def build_chunk_index(chunks):
     """
@@ -23,6 +24,7 @@ def build_chunk_index(chunks):
             "metadata": chunks[i]
         })
     return index_data
+
 
 if __name__ == "__main__":
     chunk_folder = "data/chunks"

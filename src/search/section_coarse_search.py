@@ -1,7 +1,9 @@
 # src/search/section_coarse_search.py
 
 import numpy as np
+
 from ..inference.embedding_model import embedding_model
+
 
 def cosine_similarity(v1, v2):
     v1 = np.array(v1)
@@ -9,6 +11,7 @@ def cosine_similarity(v1, v2):
     dot = np.dot(v1, v2)
     denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
     return dot / denom
+
 
 def coarse_search_sections(query: str, sections: list, beta=0.3, top_k=5):
     """
@@ -56,7 +59,7 @@ def coarse_search_sections(query: str, sections: list, beta=0.3, top_k=5):
 
         final_score = beta * sim_title + (1 - beta) * sim_chunk
         scored.append((final_score, sec))
-    
+
     scored.sort(key=lambda x: x[0], reverse=True)
     top_sections = [x[1] for x in scored[:top_k]]
     return top_sections

@@ -1,7 +1,9 @@
 # src/search/vector_search.py
 
-import numpy as np
 from typing import List, Dict
+
+import numpy as np
+
 
 def cosine_similarity(v1, v2):
     v1 = np.array(v1)
@@ -9,6 +11,7 @@ def cosine_similarity(v1, v2):
     dot = np.dot(v1, v2)
     denom = (np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8
     return dot / denom
+
 
 def simple_vector_search(query_emb, index_data: List[Dict], top_k=8):
     """

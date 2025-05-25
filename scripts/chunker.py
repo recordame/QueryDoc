@@ -1,22 +1,25 @@
 # scripts/chunker.py
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
+import os
+import sys
 from typing import List, Dict, Any
+
 from src.utils.text_cleaning import basic_clean_text
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Tune these two to balance chunk length and redundancy
 CHUNK_SIZE = 1200  # characters per chunk
-OVERLAP = 200      # characters of overlap between consecutive chunks
+OVERLAP = 200  # characters of overlap between consecutive chunks
+
 
 def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
     """
     Get the section title for a given page number based on the table of contents.
     toc: List of tuples (level, title, start_page)
     page_num: 0-indexed page number
-    """ 
+    """
     current_section = "Others"
     for (lvl, title, start_p) in toc:
         if page_num + 1 >= start_p:
@@ -24,6 +27,7 @@ def get_section_of_page(page_num: int, toc: List[List[Any]]) -> str:
         else:
             break
     return current_section
+
 
 def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
     """
@@ -47,6 +51,7 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
             break
         start += step
     return chunks
+
 
 def process_extracted_file(json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
@@ -75,14 +80,15 @@ def process_extracted_file(json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
             })
     return chunked_result
 
+
 if __name__ == "__main__":
-    extracted_folder = "data/extracted"
-    chunk_folder = "data/chunks"
+    extracted_folder = "../data/extracted"
+    chunk_folder = "../data/chunks"
     os.makedirs(chunk_folder, exist_ok=True)
 
     for fname in os.listdir(extracted_folder):
         # sections.json 파일은 건너뛰기
-        if fname.endswith(".json") and fname != "sections.json":
+        if fname.endswith(".json") and (not fname.endswith("sections.json")):
             path = os.path.join(extracted_folder, fname)
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)

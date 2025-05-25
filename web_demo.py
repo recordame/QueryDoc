@@ -1,17 +1,17 @@
 # web_demo.py
 
-import os
-import shutil
-from typing import Tuple
-import json
-import threading
 import concurrent.futures
+import json
+import os
 import pickle
+import shutil
+import threading
+from typing import Tuple
 
 import gradio as gr
 
-from src.chatbot import PDFChatBot
 from scripts import pdf_extractor, chunker, build_index, section_rep_builder
+from src.chatbot import PDFChatBot
 
 # ---------------------------------------------------------------------
 # Persistent user database (credentials + uploads + prompts)
@@ -36,6 +36,7 @@ def _save_user_db(db: dict):
     with _DB_LOCK:
         with open(USER_DB_PATH, "w", encoding="utf-8") as f:
             json.dump(db, f, indent=2)
+
 
 DEFAULT_PROMPT = (
     "Answer the user's question based on the information provided in the document context below.\n"
@@ -112,7 +113,6 @@ def login_and_prepare(username: str, password: str):
     return success, uid, msg, main_area_update, prompt_update, dropdown_update
 
 
-
 # ---------------------------------------------------------------------
 # Extraction cache helpers (per‑user, per‑PDF)
 # ---------------------------------------------------------------------
@@ -122,6 +122,7 @@ def _cache_paths(user_dir: str, pdf_basename: str):
     idx_path = os.path.join(user_dir, f"{pdf_basename}_index.pkl")
     return sec_path, idx_path
 
+
 def _save_cache(user_dir: str, pdf_basename: str,
                 sections: list, chunk_index: list):
     sec_path, idx_path = _cache_paths(user_dir, pdf_basename)
@@ -129,6 +130,7 @@ def _save_cache(user_dir: str, pdf_basename: str,
         json.dump(sections, f, ensure_ascii=False, indent=2)
     with open(idx_path, "wb") as f:
         pickle.dump(chunk_index, f)
+
 
 def _load_cache(user_dir: str, pdf_basename: str):
     sec_path, idx_path = _cache_paths(user_dir, pdf_basename)
@@ -305,7 +307,7 @@ def delete_cached_pdf(selected_name, username):
 
 
 def ask_question(question, sections, chunk_index, system_prompt, username, use_index):
-    fine_only = not use_index 
+    fine_only = not use_index
     if not username:
         return "Please log in first."
     if sections is None or chunk_index is None:
@@ -313,9 +315,9 @@ def ask_question(question, sections, chunk_index, system_prompt, username, use_i
     prompt = system_prompt or DEFAULT_PROMPT
     bot = PDFChatBot(sections, chunk_index, system_prompt=prompt)
     answer = bot.answer(question, fine_only=fine_only)
-    answer = answer.replace('<|endoftext|><|im_start|>user',"=== System Prompt ===")
-    answer = answer.replace('<|im_end|>\n<|im_start|>assistant','')
-    answer = answer.replace('<|im_end|>','')
+    answer = answer.replace('<|endoftext|><|im_start|>user', "=== System Prompt ===")
+    answer = answer.replace('<|im_end|>\n<|im_start|>assistant', '')
+    answer = answer.replace('<|im_end|>', '')
     answer_output = answer.split("=== Answer ===")[-1].strip()
     reference_output = answer.split("=== User Question ===")[0].strip().split("=== Document Context ===")[-1].strip()
 
@@ -338,7 +340,7 @@ with gr.Blocks() as demo:
         # First row ‑‑ two side‑by‑side upload panels
         with gr.Row():
             # Left column – previously uploaded files
-            with gr.Column(scale=1):  
+            with gr.Column(scale=1):
                 gr.Markdown("### Previously Uploaded PDFs")
                 gr.Markdown("- The PDF will be loaded from the cache.")
                 gr.Markdown("- **Load Selected** will load the selected PDF.")
@@ -351,7 +353,7 @@ with gr.Blocks() as demo:
                 delete_btn = gr.Button("Delete Selected", variant="stop")
 
             # Right column – new upload
-            with gr.Column(scale=1): 
+            with gr.Column(scale=1):
                 gr.Markdown("### Upload New PDF")
                 gr.Markdown("- Upload a new PDF file. Timeout for processing is **2 minutes**.")
                 gr.Markdown("- **Load PDF** will process the uploaded PDF.")
@@ -409,5 +411,5 @@ with gr.Blocks() as demo:
     question_input.submit(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=[answer_output, reference_output])
     ask_btn.click(ask_question, inputs=[question_input, sections_state, index_state, prompt_input, username_state, use_index], outputs=[answer_output, reference_output])
 
-if __name__ == "__main__":            
+if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=30987)

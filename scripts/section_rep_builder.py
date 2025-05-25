@@ -1,11 +1,12 @@
 # scripts/section_rep_builder.py
-
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
+import os
+import sys
 import numpy as np
 from src.inference.embedding_model import embedding_model
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 def build_section_reps(sections, chunk_index):
     """
@@ -40,29 +41,35 @@ def build_section_reps(sections, chunk_index):
             sec["avg_chunk_emb"] = None
         else:
             arr = np.array(section2embs[stitle])  # shape: (num_chunks, emb_dim)
-            avg_vec = arr.mean(axis=0)            # (emb_dim,)
+            avg_vec = arr.mean(axis=0)  # (emb_dim,)
             sec["avg_chunk_emb"] = avg_vec.tolist()
-    
+
     return sections
 
+
 if __name__ == "__main__":
-    # 예시: data/extracted/sections.json (목차 기반 섹션 정보)
-    sections_json = "data/extracted/sections.json"
-    # 예시: data/index/sample_chunks_vectors.json (청크 임베딩)
-    chunk_index_json = "data/index/sample_chunks_vectors.json"
+    section_jsons = [f for f in os.listdir(os.path.join("../data", "extracted")) if f.lower().endswith("sections.json")]
 
-    with open(sections_json, 'r', encoding='utf-8') as f:
-        sections_data = json.load(f)
-    
-    with open(chunk_index_json, 'r', encoding='utf-8') as f:
-        chunk_index_data = json.load(f)
+    for section_json in section_jsons:
+        section_json_name = section_json.split('.')[0]
+        chunk_json_name = section_json_name.split('-')[0]
+        # 예시: data/extracted/sections.json (목차 기반 섹션 정보)
+        sections = f"../data/extracted/{section_json}"
+        # 예시: data/index/sample_chunks_vectors.json (청크 임베딩)
+        chunk_index_json = f"../data/index/{chunk_json_name}_chunks_vectors.json"
 
-    # 섹션 대표 벡터 생성
-    updated_sections = build_section_reps(sections_data, chunk_index_data)
+        with open(sections, 'r', encoding='utf-8') as f:
+            sections_data = json.load(f)
 
-    # 저장(예: data/extracted/sections_with_emb.json)
-    out_path = "data/extracted/sections_with_emb.json"
-    with open(out_path, 'w', encoding='utf-8') as f:
-        json.dump(updated_sections, f, ensure_ascii=False, indent=2)
+        with open(chunk_index_json, 'r', encoding='utf-8') as f:
+            chunk_index_data = json.load(f)
 
-    print("Section reps built and saved.")
+        # 섹션 대표 벡터 생성
+        updated_sections = build_section_reps(sections_data, chunk_index_data)
+
+        # 저장(예: data/extracted/sections_with_emb.json)
+        out_path = f"../data/extracted/{section_json_name}_with_emb.json"
+        with open(out_path, 'w', encoding='utf-8') as f:
+            json.dump(updated_sections, f, ensure_ascii=False, indent=2)
+
+        print("Section reps built and saved.")

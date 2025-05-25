@@ -3,13 +3,14 @@
 from sentence_transformers import SentenceTransformer
 import torch
 
+
 class EmbeddingModel:
     def __init__(self, model_name="BAAI/bge-m3", device="cpu"):
         """
         Load the model and move it to the specified device.
         """
         self.model = SentenceTransformer(model_name,
-                                         cache_folder="data/hub", 
+                                         cache_folder="data/hub",
                                          trust_remote_code=True)
         self.device = device
         if device in ["cuda", "mps"]:
@@ -28,6 +29,7 @@ class EmbeddingModel:
         """
         embs = self.model.encode(texts, convert_to_numpy=True, device=self.device)
         return embs
+
 
 # Example of a global instance
 

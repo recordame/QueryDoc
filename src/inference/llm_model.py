@@ -1,8 +1,10 @@
 # src/inference/llm_model.py
 
+from threading import Thread
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
-from threading import Thread
+
 
 class LocalLLM:
     def __init__(self, model_name="trillionlabs/Trillion-7B-preview", attn_implementation="flash_attention_2", device="gpu"):
@@ -23,15 +25,14 @@ class LocalLLM:
 
         self.model.eval()
 
-
     def generate(self, prompt, streaming=False):
         messages = [{"role": "user", "content": prompt}]
         input_ids = self.tokenizer.apply_chat_template(
-                        messages,
-                        tokenize=True,
-                        add_generation_prompt=True,
-                        return_tensors="pt"
-                    )
+            messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_tensors="pt"
+        )
         if streaming:
             streamer = TextIteratorStreamer(self.tokenizer)
             thread = Thread(target=self.model.generate, kwargs=dict(
@@ -48,7 +49,7 @@ class LocalLLM:
             for text in streamer:
                 print(text, end="", flush=True)
             return text
-        
+
         else:
             output = self.model.generate(
                 input_ids.to(self.device),
@@ -70,7 +71,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
     attn_implementation = "sdpa"
-local_llm = LocalLLM(model_name="trillionlabs/Trillion-7B-preview",
-                        attn_implementation=attn_implementation, 
-                        device=device)
 
+local_llm = LocalLLM(model_name="trillionlabs/Trillion-7B-preview",
+                     attn_implementation=attn_implementation,
+                     device=device)

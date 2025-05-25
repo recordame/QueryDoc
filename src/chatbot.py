@@ -1,13 +1,15 @@
 # src/chatbot.py
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import json
-from src.search.section_coarse_search import coarse_search_sections
-from src.search.fine_search import fine_search_chunks
+import os
+import sys
+
 from src.inference.embedding_model import embedding_model
 from src.inference.llm_model import local_llm  # Example implementation of a local LLM
+from src.search.fine_search import fine_search_chunks
+from src.search.section_coarse_search import coarse_search_sections
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 DEFAULT_SYSTEM_PROMPT = (
     "Answer the user's question based on the information provided in the document context below.\n"
@@ -90,12 +92,13 @@ class PDFChatBot:
         """
         chunk_index = self.chunk_index
         sections = self.sections
-        if fine_only:              
+
+        if fine_only:
             relevant_secs = self.sections
         else:
             # Coarse Search (섹션 레벨)
-            relevant_secs = coarse_search_sections(query, sections, beta=beta, top_k=top_sections)        
-        # Fine Search (청크 레벨)
+            relevant_secs = coarse_search_sections(query, sections, beta=beta, top_k=top_sections)
+            # Fine Search (청크 레벨)
         query_emb = embedding_model.get_embedding(query)
 
         best_chunks = fine_search_chunks(query_emb, chunk_index, relevant_secs, top_k=top_chunks, fine_only=fine_only)
@@ -107,35 +110,36 @@ class PDFChatBot:
 
         # Ask the LLM to improve the user query based on ALL retrieved evidence
         query_improvement_prompt = (
-            "The user question is: " + query + "\n\n"
-            "The retrieved chunks are:\n" + combined_answer + "\n\n"
-            "Based on the retrieved chunks above, generate supplemental question(s) "
-            "that would help retrieve even more relevant information. "
-            "List the additional question(s) clearly.\n\n"
-            "The improved question is: "
+                "The user question is: " + query + "\n\n"
+                                                   "The retrieved chunks are:\n" + combined_answer + "\n\n"
+                                                                                                     "Based on the retrieved chunks above, generate supplemental question(s) "
+                                                                                                     "that would help retrieve even more relevant information. "
+                                                                                                     "List the additional question(s) clearly.\n\n"
+                                                                                                     "The improved question is: "
         )
         improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
-     
-        if fine_only:              
+
+        if fine_only:
             relevant_secs = self.sections
         else:
             # Coarse Search (섹션 레벨)
             relevant_secs = coarse_search_sections(query + ':' + improved_query, sections, beta=beta, top_k=top_sections)
-            
+
         # Fine Search (청크 레벨)            
-        query_emb = embedding_model.get_embedding(query + ':' + improved_query)                            
-        best_chunks = fine_search_chunks(query_emb, chunk_index, 
-                                         relevant_secs, top_k=top_chunks, 
+        query_emb = embedding_model.get_embedding(query + ':' + improved_query)
+        best_chunks = fine_search_chunks(query_emb, chunk_index,
+                                         relevant_secs, top_k=top_chunks,
                                          fine_only=fine_only)
-            
+
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)
         answer_text = local_llm.generate(prompt, streaming=streaming)
         return answer_text
 
+
 if __name__ == "__main__":
-    sections_path = "data/extracted/sections_with_emb.json"
-    chunk_index_path = "data/index/sample_chunks_vectors.json"
+    sections_path = "../data/extracted/7 (3)-sections_with_emb.json"
+    chunk_index_path = "../data/index/7 (3)_chunks_vectors.json"
 
     if not os.path.exists(sections_path):
         print(f"[ERROR] Sections file not found: {sections_path}")
