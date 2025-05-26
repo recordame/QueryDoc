@@ -138,22 +138,23 @@ class PDFChatBot:
 
 
 if __name__ == "__main__":
-    sections_path = "../data/extracted/7 (3)-sections_with_emb.json"
-    chunk_index_path = "../data/index/7 (3)_chunks_vectors.json"
+    sections_folder = "../data/extracted/"
+    chunk_index_folder = "../data/index/"
 
-    if not os.path.exists(sections_path):
-        print(f"[ERROR] Sections file not found: {sections_path}")
-        exit(1)
-    else:
-        with open(sections_path, 'r', encoding='utf-8') as f:
-            sections = json.load(f)
+    sections = []
+    chunk_index = []
 
-    if not os.path.exists(chunk_index_path):
-        print(f"[ERROR] Chunk index file not found: {chunk_index_path}")
-        exit(1)
-    else:
-        with open(chunk_index_path, 'r', encoding='utf-8') as f:
-            chunk_index = json.load(f)
+    for fname in os.listdir(sections_folder):
+        if fname.endswith("sections_with_emb.json"):
+            path = os.path.join(sections_folder, fname)
+            with (open(path, 'r', encoding='utf-8') as f):
+                sections.extend(json.load(f))
+
+    for fname in os.listdir(chunk_index_folder):
+        if fname.endswith("_chunks_vectors.json"):
+            path = os.path.join(chunk_index_folder, fname)
+            with open(path, 'r', encoding='utf-8') as f:
+                chunk_index.extend(json.load(f))
 
     chatbot = PDFChatBot(sections, chunk_index)
     print("Chatbot is ready. Enter your question below:")
