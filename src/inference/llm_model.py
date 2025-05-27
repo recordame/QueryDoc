@@ -7,7 +7,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStream
 
 
 class LocalLLM:
-    def __init__(self, model_name="trillionlabs/Trillion-7B-preview", attn_implementation="flash_attention_2", device="gpu"):
+    def __init__(self, model_name, attn_implementation="flash_attention_2", device="gpu"):
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
@@ -72,6 +72,6 @@ else:
     device = "cpu"
     attn_implementation = "sdpa"
 
-local_llm = LocalLLM(model_name="trillionlabs/Trillion-7B-preview",
+local_llm = LocalLLM(model_name="google/gemma-3-1b-it",
                      attn_implementation=attn_implementation,
                      device=device)

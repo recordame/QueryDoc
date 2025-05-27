@@ -58,8 +58,10 @@ class PDFChatBot:
             section_title = meta.get("section_title", "")
             content = meta.get("content", "")
             context_parts.append(f"[{section_title}] {content}")
+
         context_text = "\n\n".join(context_parts)
         prompt = f"{self.system_prompt}\n\n=== Document Context ===\n{context_text}\n\n=== User Question ===\n{user_query}\n\n=== Answer ===\n"
+
         return prompt.strip()
 
     def answer(self, query: str, beta: float = 0.3, top_sections: int = 10, top_chunks: int = 5, streaming=False, fine_only=False):
@@ -99,14 +101,13 @@ class PDFChatBot:
             # Coarse Search (섹션 레벨)
             relevant_secs = coarse_search_sections(query, sections, beta=beta, top_k=top_sections)
             # Fine Search (청크 레벨)
+
         query_emb = embedding_model.get_embedding(query)
 
         best_chunks = fine_search_chunks(query_emb, chunk_index, relevant_secs, top_k=top_chunks, fine_only=fine_only)
 
         # Build a single string that contains the content of every retrieved chunk
-        combined_answer = "\n\n".join(
-            chunk["metadata"].get("content", "") for chunk in best_chunks
-        )
+        combined_answer = "\n\n".join(chunk["metadata"].get("content", "") for chunk in best_chunks)
 
         # Ask the LLM to improve the user query based on ALL retrieved evidence
         query_improvement_prompt = (
@@ -117,6 +118,7 @@ class PDFChatBot:
                                                                                                      "List the additional question(s) clearly.\n\n"
                                                                                                      "The improved question is: "
         )
+
         improved_query = local_llm.generate(query_improvement_prompt, streaming=streaming)
 
         if fine_only:
@@ -125,7 +127,7 @@ class PDFChatBot:
             # Coarse Search (섹션 레벨)
             relevant_secs = coarse_search_sections(query + ':' + improved_query, sections, beta=beta, top_k=top_sections)
 
-        # Fine Search (청크 레벨)            
+        # Fine Search (청크 레벨)
         query_emb = embedding_model.get_embedding(query + ':' + improved_query)
         best_chunks = fine_search_chunks(query_emb, chunk_index,
                                          relevant_secs, top_k=top_chunks,
@@ -134,6 +136,7 @@ class PDFChatBot:
         # LLM 답변 생성
         prompt = self.build_prompt(query, best_chunks)
         answer_text = local_llm.generate(prompt, streaming=streaming)
+
         return answer_text
 
 
@@ -161,6 +164,8 @@ if __name__ == "__main__":
 
     while True:
         query = input("Question (or type 'exit' to quit): ")
+
         if query.lower() == "exit":
             break
+
         answer = chatbot.answer(query, streaming=True)
